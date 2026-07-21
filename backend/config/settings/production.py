@@ -11,6 +11,11 @@ DEBUG = False
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='manmitra.ai,www.manmitra.ai', cast=lambda v: [s.strip() for s in v.split(',')])
 
+# Auto-detect Render external hostname for ALLOWED_HOSTS
+RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default='')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
 # ─────────────────────────────────────────────
 # Database — PostgreSQL for production (Supabase / Neon)
 # ─────────────────────────────────────────────
