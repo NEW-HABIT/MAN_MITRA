@@ -5,28 +5,40 @@ Activate with: DJANGO_SETTINGS_MODULE=config.settings.production
 """
 from .base import *  # noqa: F401, F403
 from decouple import config
+import dj_database_url
 
 DEBUG = False
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='manmitra.ai,www.manmitra.ai', cast=lambda v: [s.strip() for s in v.split(',')])
 
 # ─────────────────────────────────────────────
-# Database — PostgreSQL for production
+# Database — PostgreSQL for production (Supabase / Neon)
 # ─────────────────────────────────────────────
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
-        'CONN_MAX_AGE': 60,
+DATABASE_URL = config('DATABASE_URL', default='')
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=60,
+            ssl_require=True
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default=''),
+            'USER': config('DB_USER', default=''),
+            'PASSWORD': config('DB_PASSWORD', default=''),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+            'OPTIONS': {
+                'sslmode': 'require',
+            },
+            'CONN_MAX_AGE': 60,
+        }
+    }
 
 # ─────────────────────────────────────────────
 # Email — Production SMTP (AWS SES recommended)
@@ -35,8 +47,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
 # ─────────────────────────────────────────────
 # CORS — Restricted to known frontend origins
@@ -88,3 +100,16 @@ LOGGING = {
         'apps': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
     },
 }
+
+# ─────────────────────────────────────────────
+# WhiteNoise — Static Files Serving
+# ─────────────────────────────────────────────
+# Insert WhiteNoiseMiddleware right after SecurityMiddleware in MIDDLEWARE
+if 'django.middleware.security.SecurityMiddleware' in MIDDLEWARE:
+    idx = MIDDLEWARE.index('django.middleware.security.SecurityMiddleware')
+    MIDDLEWARE.insert(idx + 1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+else:
+    MIDDLEWARE.insert(0, 'whitenoise.middleware.WhiteNoiseMiddleware')
+
+# Serve compressed and cached static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'

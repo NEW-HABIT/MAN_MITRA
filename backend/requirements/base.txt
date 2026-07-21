@@ -47,3 +47,8 @@ channels==4.3.2
 
 # Google Gemini SDK
 google-generativeai==0.8.6
+
+# Production & Deployment (Postgres, Static Files, DB URL parsing)
+psycopg2-binary==2.9.10
+whitenoise==6.8.2
+dj-database-url==2.3.0

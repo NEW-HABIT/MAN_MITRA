@@ -45,3 +45,6 @@ node_modules/
 .next/
 out/
 frontend/.env.local
+
+DEPLOY_FREE_TIER.md
+README.md
