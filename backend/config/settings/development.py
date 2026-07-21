@@ -8,14 +8,18 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+import dj_database_url
+from decouple import config
+
 # ─────────────────────────────────────────────
-# Database — SQLite3 (local dev)
+# Database — PostgreSQL (Supabase)
 # ─────────────────────────────────────────────
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL', default='postgresql://postgres.mzvpbmqlffuxiweizant:[YOUR-PASSWORD]@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres'),
+        conn_max_age=60,
+        ssl_require=True
+    )
 }
 
 # ─────────────────────────────────────────────
