@@ -9,6 +9,7 @@ services:
     container_name: manmitra_backend
     command: >
       sh -c "python backend/manage.py migrate &&
+             python backend/create_superuser.py &&
              cd backend && daphne -b 0.0.0.0 -p 8000 config.asgi:application"
     volumes:
       - .:/app

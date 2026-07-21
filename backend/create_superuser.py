@@ -8,14 +8,20 @@ django.setup()
 from django.contrib.auth import get_user_model
 
 def create_superuser_if_not_exists():
+    from django.conf import settings
     User = get_user_model()
     email = os.environ.get('SUPERUSER_EMAIL')
     password = os.environ.get('SUPERUSER_PASSWORD')
     full_name = os.environ.get('SUPERUSER_FULL_NAME', 'Admin User')
 
     if not email or not password:
-        print("⚠️ SUPERUSER_EMAIL or SUPERUSER_PASSWORD environment variables not set. Skipping automatic superuser creation.")
-        return
+        if settings.DEBUG:
+            email = email or 'admin@manmitra.ai'
+            password = password or 'AdminPassword123!'
+            print(f"⚠️ Using development fallback credentials since DEBUG is True: {email}")
+        else:
+            print("⚠️ SUPERUSER_EMAIL or SUPERUSER_PASSWORD environment variables not set. Skipping automatic superuser creation.")
+            return
 
     if not User.objects.filter(email=email).exists():
         print(f"🚀 Creating superuser: {email}...")
