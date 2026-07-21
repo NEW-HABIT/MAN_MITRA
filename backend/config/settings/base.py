@@ -101,12 +101,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
 # ─────────────────────────────────────────────
-# Database — SQLite3 (overridden in production)
+# Database — overridden per environment via DATABASE_URL
 # ─────────────────────────────────────────────
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',  # Overridden by development.py / production.py
     }
 }
 

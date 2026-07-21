@@ -7,7 +7,8 @@ import os
 import json
 import logging
 from django.conf import settings
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +46,7 @@ class AIWellnessService:
             return cls._get_simulated_wellness_plan(profile_data, recent_moods)
 
         try:
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash",
-                system_instruction=cls.PLAN_SYSTEM_INSTRUCTION
-            )
+            client = genai.Client(api_key=api_key)
 
             # Build detailed prompt
             prompt = (
@@ -69,7 +66,13 @@ class AIWellnessService:
             else:
                 prompt += "- Recent Mood Trend: No recent entries logged yet.\n"
 
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(
+                model='gemini-2.0-flash',
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=cls.PLAN_SYSTEM_INSTRUCTION,
+                )
+            )
             clean_text = response.text.strip()
             
             # Clean possible markdown block indicators if Gemini ignores instruction

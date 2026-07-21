@@ -1,6 +1,7 @@
 """
-ManMitra — Chat views
-Endpoints for creating, listing, and retrieving user chat sessions and message histories.
+ManMitra — Chat REST views
+AI chat feature is currently disabled (coming soon).
+All endpoints return HTTP 503 with a clear message.
 """
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
@@ -10,71 +11,66 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 from .models import ChatSession, ChatMessage
 from .serializers import ChatSessionSerializer, ChatMessageSerializer
-from core.permissions import IsVerifiedUser
+
+
+_COMING_SOON = {
+    "detail": "The AI Companion chat feature is coming soon. Check back later!"
+}
 
 
 class ChatSessionViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing user AI chat sessions.
-    Allows listing history, starting new chats, and reviewing message streams.
+    Currently disabled — returns 503 on all actions.
     """
-    permission_classes = [permissions.IsAuthenticated, IsVerifiedUser]
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = ChatSessionSerializer
-    pagination_class = None
+    # Prevent any writes while feature is disabled
+    http_method_names = ['get', 'head', 'options']
 
     def get_queryset(self):
         return ChatSession.objects.filter(user=self.request.user)
 
-    def perform_create(self, serializer):
-        # Trigger default name generator e.g. "Conversation 1"
-        count = self.get_queryset().count() + 1
-        serializer.save(
-            user=self.request.user,
-            title=f"Wellness Session #{count}"
-        )
+    def _coming_soon_response(self):
+        return Response(_COMING_SOON, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
     @extend_schema(
         tags=['AI Companion Chat'],
-        summary='List all chat sessions for the authenticated user',
-        responses={200: ChatSessionSerializer(many=True)}
+        summary='[Coming Soon] List all chat sessions',
+        responses={503: OpenApiResponse(description='Feature not yet available.')}
     )
     def list(self, request: Request, *args, **kwargs) -> Response:
-        return super().list(request, *args, **kwargs)
+        return self._coming_soon_response()
 
     @extend_schema(
         tags=['AI Companion Chat'],
-        summary='Start a new AI chat session',
-        request=None,
-        responses={201: ChatSessionSerializer}
+        summary='[Coming Soon] Start a new AI chat session',
+        responses={503: OpenApiResponse(description='Feature not yet available.')}
     )
     def create(self, request: Request, *args, **kwargs) -> Response:
-        return super().create(request, *args, **kwargs)
+        return self._coming_soon_response()
 
     @extend_schema(
         tags=['AI Companion Chat'],
-        summary='Retrieve status of a chat session',
-        responses={200: ChatSessionSerializer}
+        summary='[Coming Soon] Retrieve a chat session',
+        responses={503: OpenApiResponse(description='Feature not yet available.')}
     )
     def retrieve(self, request: Request, *args, **kwargs) -> Response:
-        return super().retrieve(request, *args, **kwargs)
+        return self._coming_soon_response()
 
     @extend_schema(
         tags=['AI Companion Chat'],
-        summary='Delete a chat session and all its messages',
-        responses={204: OpenApiResponse(description='Session deleted successfully.')}
+        summary='[Coming Soon] Delete a chat session',
+        responses={503: OpenApiResponse(description='Feature not yet available.')}
     )
     def destroy(self, request: Request, *args, **kwargs) -> Response:
-        return super().destroy(request, *args, **kwargs)
+        return self._coming_soon_response()
 
     @extend_schema(
         tags=['AI Companion Chat'],
-        summary='Fetch all messages within a specific chat session',
-        responses={200: ChatMessageSerializer(many=True)}
+        summary='[Coming Soon] Fetch messages within a session',
+        responses={503: OpenApiResponse(description='Feature not yet available.')}
     )
     @action(detail=True, methods=['get'])
     def messages(self, request: Request, pk=None) -> Response:
-        """Get message history for the session in chronological order."""
-        session = self.get_object()
-        messages = session.messages.order_by('created_at')
-        serializer = ChatMessageSerializer(messages, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return self._coming_soon_response()

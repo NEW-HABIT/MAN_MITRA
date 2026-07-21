@@ -6,7 +6,8 @@ Includes fallback mocks for developers without API keys.
 import os
 import logging
 from django.conf import settings
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,7 @@ class AIService:
     )
 
     _initialized = False
+    _client = None
 
     @classmethod
     def _init_gemini(cls):
@@ -33,7 +35,7 @@ class AIService:
         api_key = getattr(settings, 'GEMINI_API_KEY', '') or os.environ.get('GEMINI_API_KEY', '')
         if api_key:
             try:
-                genai.configure(api_key=api_key)
+                cls._client = genai.Client(api_key=api_key)
                 cls._initialized = True
                 logger.info("Google Gemini SDK initialized successfully.")
             except Exception as e:
@@ -67,21 +69,24 @@ class AIService:
                     f"- Preferences: {', '.join(user_profile.get('wellness_preferences', []))}"
                 )
 
-            # Use Gemini 1.5 Flash for mental wellness chat
-            model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash",
-                system_instruction=system_prompt
-            )
-
             # Map roles to Gemini expectations ('user', 'model')
             for msg in session_messages:
                 role = 'user' if msg['role'] == 'user' else 'model'
-                contents.append({
-                    'role': role,
-                    'parts': [msg['content']]
-                })
+                contents.append(
+                    types.Content(
+                        role=role,
+                        parts=[types.Part(text=msg['content'])]
+                    )
+                )
 
-            response = model.generate_content(contents)
+            # Use Gemini 2.0 Flash for mental wellness chat
+            response = cls._client.models.generate_content(
+                model='gemini-2.0-flash',
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                )
+            )
             return response.text
         except Exception as e:
             logger.error(f"Gemini API generation failed: {e}")

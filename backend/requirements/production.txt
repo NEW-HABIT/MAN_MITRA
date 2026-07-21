@@ -1,0 +1,5 @@
+# ─────────────────────────────────────────────
+# ManMitra — Production Requirements
+# psycopg2-binary is already included in base.txt
+# ─────────────────────────────────────────────
+-r base.txt

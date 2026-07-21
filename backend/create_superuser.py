@@ -1,94 +1,63 @@
 import os
+import sys
 import django
+from decouple import config as env_config
 
-# Set Django settings module and initialize Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.production')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.development')
 django.setup()
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model  # noqa: E402
+
 
 def create_superuser_if_not_exists():
-    from django.conf import settings
+    import secrets
     User = get_user_model()
-    email = os.environ.get('SUPERUSER_EMAIL')
-    password = os.environ.get('SUPERUSER_PASSWORD')
-    full_name = os.environ.get('SUPERUSER_FULL_NAME', 'Admin User')
 
-    if not email or not password:
-        if settings.DEBUG:
-            email = email or 'admin@manmitra.ai'
-            password = password or 'AdminPassword123!'
-            print(f"⚠️ Using development fallback credentials since DEBUG is True: {email}")
-        else:
-            print("⚠️ SUPERUSER_EMAIL or SUPERUSER_PASSWORD environment variables not set. Skipping automatic superuser creation.")
-            return
+    email     = env_config('SUPERUSER_EMAIL', default='')
+    password  = env_config('SUPERUSER_PASSWORD', default='')
+    full_name = env_config('SUPERUSER_FULL_NAME', default='Admin User')
 
-    if not User.objects.filter(email=email).exists():
-        print(f"🚀 Creating superuser: {email}...")
-        User.objects.create_superuser(
-            email=email,
-            password=password,
-            full_name=full_name,
-            role='admin',        # Match the custom User role choice
-            is_staff=True,
-            is_superuser=True,
-            is_verified=True
+    if email and password:
+        if not User.objects.filter(email=email).exists():
+            User.objects.create_superuser(
+                email=email,
+                password=password,
+                full_name=full_name,
+                role='admin',
+                is_staff=True,
+                is_superuser=True,
+                is_verified=True,
+            )
+
+    # ── Seed test accounts (development / DEBUG only) ──────────────────────
+    from django.conf import settings
+    if not settings.DEBUG:
+        return
+
+    # Regular User
+    user_email    = env_config('TEST_USER_EMAIL', default='user@manmitra.ai')
+    user_password = env_config('TEST_USER_PASSWORD', default='')
+    if not User.objects.filter(email=user_email).exists():
+        User.objects.create_user(
+            email=user_email,
+            password=user_password or secrets.token_urlsafe(16),
+            full_name='Jane Doe',
+            role='user',
+            is_verified=True,
         )
-        print("✅ Superuser created successfully.")
-    else:
-        print(f"ℹ️ Superuser {email} already exists. Skipping creation.")
 
-    # Seed additional test accounts in development mode (DEBUG=True)
-    if settings.DEBUG:
-        import secrets
+    # Therapist User
+    therapist_email    = env_config('TEST_THERAPIST_EMAIL', default='therapist@manmitra.ai')
+    therapist_password = env_config('TEST_THERAPIST_PASSWORD', default='')
+    if not User.objects.filter(email=therapist_email).exists():
+        User.objects.create_user(
+            email=therapist_email,
+            password=therapist_password or secrets.token_urlsafe(16),
+            full_name='Dr. Sarah Smith',
+            role='therapist',
+            is_verified=True,
+        )
 
-        # 1. Regular User
-        user_email = 'user@manmitra.ai'
-        if not User.objects.filter(email=user_email).exists():
-            user_password = os.environ.get('TEST_USER_PASSWORD')
-            is_random = False
-            if not user_password:
-                user_password = secrets.token_urlsafe(16)
-                is_random = True
-
-            print(f"🚀 Creating test regular user: {user_email}...")
-            User.objects.create_user(
-                email=user_email,
-                password=user_password,
-                full_name='Jane Doe',
-                role='user',
-                is_verified=True
-            )
-            if is_random:
-                print(f"🔑 Test user created. Login password: {user_password}")
-            else:
-                print("✅ Test regular user created successfully.")
-        else:
-            print(f"ℹ️ Test regular user {user_email} already exists. Skipping.")
-
-        # 2. Therapist / Doctor User
-        therapist_email = 'therapist@manmitra.ai'
-        if not User.objects.filter(email=therapist_email).exists():
-            therapist_password = os.environ.get('TEST_THERAPIST_PASSWORD')
-            is_random = False
-            if not therapist_password:
-                therapist_password = secrets.token_urlsafe(16)
-                is_random = True
-
-            print(f"🚀 Creating test therapist: {therapist_email}...")
-            User.objects.create_user(
-                email=therapist_email,
-                password=therapist_password,
-                full_name='Dr. Sarah Smith',
-                role='therapist',
-                is_verified=True
-            )
-            if is_random:
-                print(f"🔑 Test therapist created. Login password: {therapist_password}")
-            else:
-                print("✅ Test therapist created successfully.")
-        else:
-            print(f"ℹ️ Test therapist {therapist_email} already exists. Skipping.")
 
 if __name__ == '__main__':
     create_superuser_if_not_exists()
