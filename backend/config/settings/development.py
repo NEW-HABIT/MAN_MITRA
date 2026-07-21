@@ -12,15 +12,26 @@ import dj_database_url
 from decouple import config
 
 # ─────────────────────────────────────────────
-# Database — PostgreSQL (Supabase)
+# Database — PostgreSQL (Supabase) with SQLite fallback
 # ─────────────────────────────────────────────
-DATABASES = {
-    'default': dj_database_url.config(
-        default=config('DATABASE_URL', default='postgresql://postgres.mzvpbmqlffuxiweizant:[YOUR-PASSWORD]@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres'),
-        conn_max_age=60,
-        ssl_require=True
-    )
-}
+DATABASE_URL = config('DATABASE_URL', default='')
+
+if not DATABASE_URL or '[YOUR-PASSWORD]' in DATABASE_URL:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+    print("ℹ️ Using SQLite database fallback (zero-config local dev).")
+else:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=60,
+            ssl_require=True
+        )
+    }
 
 # ─────────────────────────────────────────────
 # Email — Print to console during development
