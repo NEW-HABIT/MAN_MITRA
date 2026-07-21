@@ -40,33 +40,53 @@ def create_superuser_if_not_exists():
 
     # Seed additional test accounts in development mode (DEBUG=True)
     if settings.DEBUG:
+        import secrets
+
         # 1. Regular User
         user_email = 'user@manmitra.ai'
         if not User.objects.filter(email=user_email).exists():
+            user_password = os.environ.get('TEST_USER_PASSWORD')
+            is_random = False
+            if not user_password:
+                user_password = secrets.token_urlsafe(16)
+                is_random = True
+
             print(f"🚀 Creating test regular user: {user_email}...")
             User.objects.create_user(
                 email=user_email,
-                password='UserPassword123!',
+                password=user_password,
                 full_name='Jane Doe',
                 role='user',
                 is_verified=True
             )
-            print("✅ Test regular user created successfully.")
+            if is_random:
+                print(f"🔑 Test user created. Login password: {user_password}")
+            else:
+                print("✅ Test regular user created successfully.")
         else:
             print(f"ℹ️ Test regular user {user_email} already exists. Skipping.")
 
         # 2. Therapist / Doctor User
         therapist_email = 'therapist@manmitra.ai'
         if not User.objects.filter(email=therapist_email).exists():
+            therapist_password = os.environ.get('TEST_THERAPIST_PASSWORD')
+            is_random = False
+            if not therapist_password:
+                therapist_password = secrets.token_urlsafe(16)
+                is_random = True
+
             print(f"🚀 Creating test therapist: {therapist_email}...")
             User.objects.create_user(
                 email=therapist_email,
-                password='TherapistPassword123!',
+                password=therapist_password,
                 full_name='Dr. Sarah Smith',
                 role='therapist',
                 is_verified=True
             )
-            print("✅ Test therapist created successfully.")
+            if is_random:
+                print(f"🔑 Test therapist created. Login password: {therapist_password}")
+            else:
+                print("✅ Test therapist created successfully.")
         else:
             print(f"ℹ️ Test therapist {therapist_email} already exists. Skipping.")
 
