@@ -56,7 +56,7 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
     default='https://manmitra.ai,https://www.manmitra.ai',
-    cast=lambda v: [s.strip() for s in v.split(',')]
+    cast=lambda v: [s.rstrip('/').strip() for s in v.split(',')]
 )
 CORS_ALLOW_CREDENTIALS = True
 
