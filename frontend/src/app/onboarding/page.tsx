@@ -22,23 +22,41 @@ export default function OnboardingPage() {
 
   // Form State
   const [demographics, setDemographics] = useState({
-    age: 24,
-    gender: 'prefer_not_say',
-    occupation: 'student',
-    preferred_language: 'en',
+    date_of_birth: '2000-01-01',
+    gender: 'PNS',
+    occupation: '',
   });
 
-  const [sleep, setSleep] = useState('7_8_hours');
+  const [sleep, setSleep] = useState({
+    bedtime: '22:30',
+    wake_time: '06:30',
+  });
   const [stressLevel, setStressLevel] = useState(5);
-  const [goals, setGoals] = useState<string[]>(['reduce_anxiety', 'better_sleep']);
-  const [prefs, setPrefs] = useState<string[]>(['meditation', 'journaling']);
+  const [goals, setGoals] = useState<string[]>([]);
+  const [prefs, setPrefs] = useState<string[]>([]);
 
-  const toggleGoal = (id: string) => {
-    setGoals((prev) => prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]);
+  const goalsList = [
+    "Reduce daily anxiety",
+    "Improve sleep quality",
+    "Build emotional resilience",
+    "Manage work stress",
+    "Increase self-compassion",
+    "Practice mindfulness",
+  ];
+
+  const prefsList = [
+    "Mindful breathing exercises",
+    "Private reflective journaling",
+    "Daily routine check-ins",
+    "Guided progressive relaxation",
+  ];
+
+  const handleGoalToggle = (goal: string) => {
+    setGoals(prev => prev.includes(goal) ? prev.filter(g => g !== goal) : [...prev, goal]);
   };
 
-  const togglePref = (id: string) => {
-    setPrefs((prev) => prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]);
+  const handlePrefToggle = (pref: string) => {
+    setPrefs(prev => prev.includes(pref) ? prev.filter(p => p !== pref) : [...prev, pref]);
   };
 
   const handleComplete = async () => {
