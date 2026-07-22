@@ -9,12 +9,15 @@ import dj_database_url
 
 DEBUG = False
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='manmitra.ai,www.manmitra.ai', cast=lambda v: [s.strip() for s in v.split(',')])
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=lambda v: [s.strip() for s in v.split(',') if s.strip()])
 
 # Auto-detect Render external hostname for ALLOWED_HOSTS
 RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default='')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    if not RENDER_EXTERNAL_HOSTNAME.endswith('.onrender.com'):
+        ALLOWED_HOSTS.append(f"{RENDER_EXTERNAL_HOSTNAME}.onrender.com")
+
 
 # ─────────────────────────────────────────────
 # Database — PostgreSQL for production (Supabase / Neon)
