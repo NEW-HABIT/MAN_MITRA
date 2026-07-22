@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, Check, Loader2, Lock, Mail } from 'lucide-react';
+import { API_URL } from '@/config';
 
 function ResetPasswordContent() {
   const router = useRouter();
@@ -34,7 +35,7 @@ function ResetPasswordContent() {
     setErrorMsg('');
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/auth/password/reset/', {
+      const res = await fetch(`${API_URL}/api/auth/password/reset/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -60,7 +61,7 @@ function ResetPasswordContent() {
     }
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/auth/password/reset/confirm/', {
+      const res = await fetch(`${API_URL}/api/auth/password/reset/confirm/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, password, password_confirm: passwordConfirm }),

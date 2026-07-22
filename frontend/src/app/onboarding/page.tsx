@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, ShieldCheck, Heart, Moon, Smile, Sparkles } from 'lucide-react';
+import { API_URL } from '@/config';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -19,51 +20,32 @@ export default function OnboardingPage() {
     }
   }, [isAuthenticated, router]);
 
-  // Form states
+  // Form State
   const [demographics, setDemographics] = useState({
-    date_of_birth: '',
-    gender: 'PNS',
-    occupation: '',
+    age: 24,
+    gender: 'prefer_not_say',
+    occupation: 'student',
+    preferred_language: 'en',
   });
 
+  const [sleep, setSleep] = useState('7_8_hours');
   const [stressLevel, setStressLevel] = useState(5);
-  const [sleep, setSleep] = useState({
-    bedtime: '22:30',
-    wake_time: '06:30',
-  });
+  const [goals, setGoals] = useState<string[]>(['reduce_anxiety', 'better_sleep']);
+  const [prefs, setPrefs] = useState<string[]>(['meditation', 'journaling']);
 
-  const [goals, setGoals] = useState<string[]>([]);
-  const [prefs, setPrefs] = useState<string[]>([]);
-
-  const goalsList = [
-    "Reduce daily anxiety",
-    "Improve sleep quality",
-    "Build emotional resilience",
-    "Manage work stress",
-    "Increase self-compassion",
-    "Practice mindfulness",
-  ];
-
-  const prefsList = [
-    "Mindful breathing exercises",
-    "Private reflective journaling",
-    "Daily routine check-ins",
-    "Guided progressive relaxation",
-  ];
-
-  const handleGoalToggle = (goal: string) => {
-    setGoals(prev => prev.includes(goal) ? prev.filter(g => g !== goal) : [...prev, goal]);
+  const toggleGoal = (id: string) => {
+    setGoals((prev) => prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]);
   };
 
-  const handlePrefToggle = (pref: string) => {
-    setPrefs(prev => prev.includes(pref) ? prev.filter(p => p !== pref) : [...prev, pref]);
+  const togglePref = (id: string) => {
+    setPrefs((prev) => prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]);
   };
 
   const handleComplete = async () => {
     setLoading(true);
     try {
       // 1. Update Profile (demographics)
-      const profileRes = await fetch('http://127.0.0.1:8000/api/auth/me/', {
+      const profileRes = await fetch(`${API_URL}/api/auth/me/`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -75,7 +57,7 @@ export default function OnboardingPage() {
       if (!profileRes.ok) throw new Error('Failed to save demographic data.');
 
       // 2. Update Wellness Profile (sleep, stress, goals, preferences)
-      const wellnessRes = await fetch('http://127.0.0.1:8000/api/auth/me/wellness/', {
+      const wellnessRes = await fetch(`${API_URL}/api/auth/me/wellness/`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -93,7 +75,7 @@ export default function OnboardingPage() {
       if (!wellnessRes.ok) throw new Error('Failed to save wellness configuration.');
 
       // 3. Trigger wellness plan generation
-      const genRes = await fetch('http://127.0.0.1:8000/api/wellness/plans/generate/', {
+      const genRes = await fetch(`${API_URL}/api/wellness/plans/generate/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

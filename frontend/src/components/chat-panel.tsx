@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Sparkles, MessageSquare, Plus, Trash2, Heart, ShieldAlert, X } from 'lucide-react';
+import { API_URL, WS_URL } from '@/config';
 
 interface ChatMessage {
   id?: string;
@@ -43,7 +44,7 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
   // ── 1. Fetch Sessions List ────────────────────────────────────────────────
   const fetchSessions = async () => {
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/chat/sessions/', {
+      const res = await fetch(`${API_URL}/api/chat/sessions/`, {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
       const data = await res.json();
@@ -79,7 +80,7 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
 
   const createSession = async () => {
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/chat/sessions/', {
+      const res = await fetch(`${API_URL}/api/chat/sessions/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,7 +100,7 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
   const deleteSession = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/chat/sessions/${id}/`, {
+      const res = await fetch(`${API_URL}/api/chat/sessions/${id}/`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
@@ -122,7 +123,7 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
     // Load REST message history
     const loadHistory = async () => {
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/chat/sessions/${activeSessionId}/messages/`, {
+        const res = await fetch(`${API_URL}/api/chat/sessions/${activeSessionId}/messages/`, {
           headers: { 'Authorization': `Bearer ${accessToken}` },
         });
         const data = await res.json();
@@ -146,7 +147,7 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
 
     // Start WebSocket
     setStatus('connecting');
-    const wsUrl = `ws://127.0.0.1:8000/ws/chat/${activeSessionId}/?token=${accessToken}`;
+    const wsUrl = `${WS_URL}/ws/chat/${activeSessionId}/?token=${accessToken}`;
     const socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {

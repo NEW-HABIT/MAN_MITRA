@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Calendar, Shield, Trash2, Plus, X, Heart, Sparkles, Edit3 } from 'lucide-react';
+import { API_URL } from '@/config';
 
 interface JournalEntry {
   id: string;
@@ -18,7 +19,7 @@ interface JournalPanelProps {
 
 export default function JournalPanel({ accessToken }: JournalPanelProps) {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   // Modals state
   const [readEntry, setReadEntry] = useState<JournalEntry | null>(null);
@@ -32,7 +33,7 @@ export default function JournalPanel({ accessToken }: JournalPanelProps) {
   const fetchEntries = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/journal/entries/', {
+      const res = await fetch(`${API_URL}/api/journal/entries/`, {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
       const data = await res.json();
@@ -63,7 +64,7 @@ export default function JournalPanel({ accessToken }: JournalPanelProps) {
 
     setSaving(true);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/journal/entries/', {
+      const res = await fetch(`${API_URL}/api/journal/entries/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -93,7 +94,7 @@ export default function JournalPanel({ accessToken }: JournalPanelProps) {
     if (!confirm("Are you sure you want to delete this private journal entry permanently?")) return;
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/journal/entries/${id}/`, {
+      const res = await fetch(`${API_URL}/api/journal/entries/${id}/`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });

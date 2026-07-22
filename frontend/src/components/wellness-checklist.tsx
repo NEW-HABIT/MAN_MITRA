@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckSquare, Square, RefreshCw, Zap, Clock } from 'lucide-react';
+import { API_URL } from '@/config';
 
 interface Task {
   time: string;
@@ -28,7 +29,7 @@ export default function WellnessChecklist({ accessToken }: WellnessChecklistProp
 
   const fetchPlans = async () => {
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/wellness/plans/active/', {
+      const res = await fetch(`${API_URL}/api/wellness/plans/active/`, {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
       const data = await res.json();
@@ -63,7 +64,7 @@ export default function WellnessChecklist({ accessToken }: WellnessChecklistProp
     }));
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/wellness/plans/${planId}/toggle-task/`, {
+      const res = await fetch(`${API_URL}/api/wellness/plans/${planId}/toggle-task/`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +85,7 @@ export default function WellnessChecklist({ accessToken }: WellnessChecklistProp
   const handleGenerateNew = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/wellness/plans/generate/', {
+      const res = await fetch(`${API_URL}/api/wellness/plans/generate/`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });

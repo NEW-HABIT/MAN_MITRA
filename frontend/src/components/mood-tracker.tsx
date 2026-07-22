@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Smile, X } from 'lucide-react';
+import { API_URL } from '@/config';
 
 interface MoodTrackerProps {
   accessToken: string;
@@ -17,16 +18,11 @@ export default function MoodTracker({ accessToken, onClose, onSuccess }: MoodTra
   const [loading, setLoading] = useState(false);
 
   const moodChoices = [
-    { label: 'happy', emoji: '😊', name: 'Happy' },
-    { label: 'sad', emoji: '😢', name: 'Sad' },
+    { label: 'calm', emoji: '🌿', name: 'Calm' },
     { label: 'anxious', emoji: '😰', name: 'Anxious' },
-    { label: 'calm', emoji: '😌', name: 'Calm' },
-    { label: 'angry', emoji: '😠', name: 'Angry' },
+    { label: 'sad', emoji: '🌧️', name: 'Sad' },
+    { label: 'happy', emoji: '✨', name: 'Happy' },
     { label: 'neutral', emoji: '😐', name: 'Neutral' },
-    { label: 'excited', emoji: '🤩', name: 'Excited' },
-    { label: 'tired', emoji: '😴', name: 'Tired' },
-    { label: 'grateful', emoji: '🙏', name: 'Grateful' },
-    { label: 'overwhelmed', emoji: '😵', name: 'Overwhelmed' },
     { label: 'hopeful', emoji: '🌟', name: 'Hopeful' },
     { label: 'frustrated', emoji: '😤', name: 'Frustrated' },
   ];
@@ -38,9 +34,9 @@ export default function MoodTracker({ accessToken, onClose, onSuccess }: MoodTra
       return;
     }
 
-    setLoading(false);
+    setLoading(true);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/mood/logs/', {
+      const res = await fetch(`${API_URL}/api/mood/logs/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

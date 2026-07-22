@@ -14,6 +14,7 @@ import WellnessChecklist from '@/components/wellness-checklist';
 import MoodTracker from '@/components/mood-tracker';
 import ChatPanel from '@/components/chat-panel';
 import JournalPanel from '@/components/journal-panel';
+import { API_URL } from '@/config';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -45,7 +46,7 @@ export default function DashboardPage() {
   const fetchMoodStats = async () => {
     if (!accessToken) return;
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/mood/analytics/', {
+      const res = await fetch(`${API_URL}/api/mood/analytics/`, {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
       const data = await res.json();
@@ -71,7 +72,7 @@ export default function DashboardPage() {
   const fetchAdminStats = async () => {
     if (!accessToken || user?.role !== 'admin') return;
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/auth/admin/dashboard/', {
+      const res = await fetch(`${API_URL}/api/auth/admin/dashboard/`, {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
       const data = await res.json();

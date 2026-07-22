@@ -56,14 +56,21 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
 # ─────────────────────────────────────────────
-# CORS — Restricted to known frontend origins
+# CORS & CSRF — Restricted to known frontend origins
 # ─────────────────────────────────────────────
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
     default='https://manmitra.ai,https://www.manmitra.ai',
-    cast=lambda v: [s.rstrip('/').strip() for s in v.split(',')]
+    cast=lambda v: [s.rstrip('/').strip() for s in v.split(',') if s.strip()]
 )
 CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default=','.join(CORS_ALLOWED_ORIGINS) if CORS_ALLOWED_ORIGINS else 'https://manmitra.ai',
+    cast=lambda v: [s.rstrip('/').strip() for s in v.split(',') if s.strip()]
+)
+
 
 # ─────────────────────────────────────────────
 # Security Headers

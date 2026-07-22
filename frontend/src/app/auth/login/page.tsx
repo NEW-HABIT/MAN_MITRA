@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 import { motion } from 'framer-motion';
 import { ArrowRight, Lock, Mail, Sparkles } from 'lucide-react';
+import { API_URL } from '@/config';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function LoginPage() {
     setUnverified(false);
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+      const res = await fetch(`${API_URL}/api/auth/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -57,7 +58,7 @@ export default function LoginPage() {
   const handleResend = async () => {
     setErrorMsg('');
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/auth/resend-verification/', {
+      const res = await fetch(`${API_URL}/api/auth/resend-verification/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

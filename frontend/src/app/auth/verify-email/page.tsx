@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { motion } from 'framer-motion';
 import { Loader2, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { API_URL } from '@/config';
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -25,7 +26,7 @@ function VerifyEmailContent() {
 
     const verify = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/auth/verify-email/', {
+        const res = await fetch(`${API_URL}/api/auth/verify-email/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token }),
