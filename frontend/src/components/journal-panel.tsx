@@ -188,7 +188,7 @@ export default function JournalPanel({ accessToken }: JournalPanelProps) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg glass-panel p-8 rounded-3xl relative bg-white/95"
+              className="w-full max-w-lg glass-panel p-5 sm:p-8 rounded-3xl relative bg-white/95 max-h-[90vh] overflow-y-auto"
             >
               <button
                 onClick={() => setReadEntry(null)}
@@ -230,7 +230,7 @@ export default function JournalPanel({ accessToken }: JournalPanelProps) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg glass-panel p-8 rounded-3xl relative bg-white/95"
+              className="w-full max-w-lg glass-panel p-5 sm:p-8 rounded-3xl relative bg-white/95 max-h-[90vh] overflow-y-auto"
             >
               <button
                 onClick={() => setWriteOpen(false)}

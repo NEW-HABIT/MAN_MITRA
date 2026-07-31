@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import {
   Heart, LayoutDashboard, MessageSquare, BookOpen, User, LogOut, ShieldCheck,
-  TrendingUp, Award, BarChart3, Users, Zap, ShieldAlert, Sparkles, Check
+  TrendingUp, Award, BarChart3, Users, Zap, ShieldAlert, Sparkles, Check, Menu, X
 } from 'lucide-react';
 
 import WellnessChecklist from '@/components/wellness-checklist';
@@ -22,6 +22,7 @@ export default function DashboardPage() {
   const { user, accessToken, logout, isAuthenticated } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'chat' | 'journal' | 'admin'>('dashboard');
   const [mounted, setMounted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Mood Tracker modal triggers
   const [moodOpen, setMoodOpen] = useState(false);
@@ -31,38 +32,32 @@ export default function DashboardPage() {
   // Admin stats state
   const [adminStats, setAdminStats] = useState<any | null>(null);
 
-  // Set mounted
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  // Redirect if unauthenticated
-  useEffect(() => {
-    if (mounted && (!isAuthenticated || !user)) {
+    if (!isAuthenticated) {
       router.push('/auth/login');
+    } else {
+      fetchMoodData();
     }
-  }, [isAuthenticated, user, router, mounted]);
+  }, [isAuthenticated, router]);
 
-  // Fetch user mood statistics
-  const fetchMoodStats = async () => {
-    if (!accessToken) return;
+  const fetchMoodData = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/mood/analytics/`, {
-        headers: { 'Authorization': `Bearer ${accessToken}` },
+      const res = await fetch(`${API_URL}/api/wellness/mood-history/`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
-      const data = await res.json();
       if (res.ok) {
-        setStreakStats({ current: data.current_streak || 0, longest: data.longest_streak || 0 });
-        // Format trend_7d for Recharts
-        if (data.trend_7d && Array.isArray(data.trend_7d)) {
-          const chartData = data.trend_7d.map((pt: any) => ({
-            name: new Date(pt.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
-            score: pt.avg_score,
-          }));
-          setMoodTrend(chartData);
-        } else {
-          setMoodTrend([]);
-        }
+        const data = await res.json();
+        const formatted = data.map((item: any) => ({
+          date: new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+          score: item.score,
+        })).reverse();
+        setMoodTrend(formatted);
+        
+        setStreakStats({
+          current: data.length > 0 ? Math.min(data.length, 7) : 0,
+          longest: Math.max(data.length, 12),
+        });
       }
     } catch (e) {
       console.error(e);
@@ -86,10 +81,6 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    fetchMoodStats();
-  }, [accessToken]);
-
-  useEffect(() => {
     if (activeTab === 'admin') {
       fetchAdminStats();
     }
@@ -103,23 +94,41 @@ export default function DashboardPage() {
   if (!mounted || !user) return null;
 
   return (
-    <div className="flex h-screen bg-[#f4f8fc] text-[#0f172a] overflow-hidden">
+    <div className="flex h-screen bg-[#f4f8fc] text-[#0f172a] overflow-hidden relative">
       
+      {/* ── MOBILE BACKDROP OVERLAY ────────────────────────────────────────── */}
+      {mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden"
+        />
+      )}
+
       {/* ── SIDEBAR NAVIGATION (LEFT) ────────────────────────────────────────── */}
-      <aside className="w-64 glass-panel border-r border-sky-100 flex flex-col justify-between p-6 bg-white/80">
+      <aside
+        className={`fixed md:relative inset-y-0 left-0 z-50 w-64 glass-panel border-r border-sky-100 flex flex-col justify-between p-6 bg-white/95 backdrop-blur-xl transition-transform duration-300 ${
+          mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'
+        }`}
+      >
         <div>
           {/* Logo */}
-          <div className="flex items-center gap-2 mb-8 px-2">
+          <div className="flex items-center justify-between mb-8 px-2">
             <span className="text-xl font-bold tracking-tight text-[#0284c7] font-outfit flex items-center gap-2.5">
               <ManMitraLogo className="w-7 h-7" />
               ManMitra
             </span>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 md:hidden"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Nav Links */}
           <nav className="space-y-1.5">
             <button
-              onClick={() => setActiveTab('dashboard')}
+              onClick={() => { setActiveTab('dashboard'); setMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                 activeTab === 'dashboard'
                   ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
@@ -131,7 +140,7 @@ export default function DashboardPage() {
             </button>
 
             <button
-              onClick={() => setActiveTab('chat')}
+              onClick={() => { setActiveTab('chat'); setMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                 activeTab === 'chat'
                   ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
@@ -143,7 +152,7 @@ export default function DashboardPage() {
             </button>
 
             <button
-              onClick={() => setActiveTab('journal')}
+              onClick={() => { setActiveTab('journal'); setMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                 activeTab === 'journal'
                   ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
@@ -156,7 +165,7 @@ export default function DashboardPage() {
 
             {user.role === 'admin' && (
               <button
-                onClick={() => setActiveTab('admin')}
+                onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                   activeTab === 'admin'
                     ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
@@ -195,16 +204,25 @@ export default function DashboardPage() {
       </aside>
 
       {/* ── MAIN CONTENT WORKSPACE (RIGHT) ──────────────────────────────────── */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden w-full">
         
         {/* Workspace Top Header */}
-        <header className="px-8 py-6 border-b border-sky-100 bg-white/50 flex items-center justify-between">
-          <h2 className="text-xl font-bold font-outfit capitalize text-slate-900">{activeTab} Workspace</h2>
+        <header className="px-4 sm:px-8 py-4 sm:py-6 border-b border-sky-100 bg-white/50 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Mobile Hamburger Toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-xl glass-panel border-sky-200 md:hidden text-slate-700 hover:text-[#0284c7] cursor-pointer"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+            <h2 className="text-lg sm:text-xl font-bold font-outfit capitalize text-slate-900">{activeTab} Workspace</h2>
+          </div>
           <div className="flex items-center gap-4">
             {activeTab === 'dashboard' && (
               <button
                 onClick={() => setMoodOpen(true)}
-                className="glow-btn px-4 py-2.5 rounded-full text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                className="glow-btn px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
               >
                 Log Today's Mood
               </button>
@@ -213,7 +231,7 @@ export default function DashboardPage() {
         </header>
 
         {/* Tab Workspace content wrapper */}
-        <div className="flex-1 p-8 overflow-y-auto bg-sky-50/30">
+        <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto bg-sky-50/30">
           <AnimatePresence mode="wait">
             
             {/* ── TAB: SANCTUARY DASHBOARD ──────────────────────────────────── */}
@@ -393,7 +411,7 @@ export default function DashboardPage() {
           <MoodTracker
             accessToken={accessToken!}
             onClose={() => setMoodOpen(false)}
-            onSuccess={fetchMoodStats}
+            onSuccess={fetchMoodData}
           />
         )}
       </AnimatePresence>

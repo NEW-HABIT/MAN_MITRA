@@ -205,42 +205,43 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 h-[550px] relative">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 min-h-[500px] md:h-[550px] relative">
       
       {/* Sessions History List Panel (Left) */}
-      <div className="md:col-span-1 glass-panel p-4 rounded-3xl flex flex-col justify-between h-full bg-white/80 border-sky-100">
+      <div className="md:col-span-1 glass-panel p-3 sm:p-4 rounded-3xl flex flex-col justify-between max-h-[160px] md:max-h-full md:h-full bg-white/80 border-sky-100">
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Conversations</span>
+          <div className="flex items-center justify-between mb-2 md:mb-4">
+            <span className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider">Conversations</span>
             <button
               onClick={createSession}
-              className="p-1.5 rounded-lg glass-panel hover:border-sky-300 transition-all cursor-pointer text-[#0284c7]"
+              className="p-1.5 rounded-lg glass-panel hover:border-sky-300 transition-all cursor-pointer text-[#0284c7] flex items-center gap-1 text-[11px] font-semibold"
               title="Start New Chat"
             >
-              <Plus className="w-4 h-4 text-[#0284c7]" />
+              <Plus className="w-3.5 h-3.5 text-[#0284c7]" />
+              <span className="md:hidden">New</span>
             </button>
           </div>
           
-          <div className="space-y-2 overflow-y-auto max-h-[420px] pr-1">
+          <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-y-auto max-h-[100px] md:max-h-[420px] pb-1 md:pb-0 pr-1">
             {sessions.map((s) => {
               const active = s.id === activeSessionId;
               return (
                 <button
                   key={s.id}
                   onClick={() => handleSessionChange(s.id)}
-                  className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all text-xs cursor-pointer ${
+                  className={`flex-shrink-0 md:w-full flex items-center justify-between p-2.5 md:p-3 rounded-xl border text-left transition-all text-xs cursor-pointer ${
                     active 
                       ? 'bg-sky-100 border-[#0284c7] text-[#0284c7] font-semibold' 
                       : 'glass-panel border-transparent hover:border-sky-200 text-slate-700'
                   }`}
                 >
-                  <div className="flex items-center gap-2 truncate">
-                    <MessageSquare className={`w-3.5 h-3.5 ${s.is_crisis ? 'text-amber-500' : 'text-[#0284c7]'}`} />
+                  <div className="flex items-center gap-2 truncate max-w-[140px] md:max-w-none">
+                    <MessageSquare className={`w-3.5 h-3.5 flex-shrink-0 ${s.is_crisis ? 'text-amber-500' : 'text-[#0284c7]'}`} />
                     <span className="truncate">{s.title}</span>
                   </div>
                   <button
                     onClick={(e) => deleteSession(s.id, e)}
-                    className="opacity-40 hover:opacity-100 transition-opacity cursor-pointer p-0.5 hover:text-rose-500"
+                    className="opacity-40 hover:opacity-100 transition-opacity cursor-pointer p-0.5 hover:text-rose-500 ml-2"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -252,7 +253,7 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
       </div>
 
       {/* Main Chat Conversation Panel (Right) */}
-      <div className="md:col-span-3 glass-panel rounded-3xl flex flex-col justify-between overflow-hidden h-full bg-white/80 border-sky-100">
+      <div className="md:col-span-3 glass-panel rounded-3xl flex flex-col justify-between overflow-hidden h-[420px] md:h-full bg-white/80 border-sky-100">
         
         {/* Chat Session Header */}
         <div className="px-6 py-4 border-b border-sky-100 flex items-center justify-between bg-white/60">

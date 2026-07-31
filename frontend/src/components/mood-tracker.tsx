@@ -64,7 +64,7 @@ export default function MoodTracker({ accessToken, onClose, onSuccess }: MoodTra
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-lg glass-panel p-8 rounded-3xl relative bg-white/90"
+        className="w-full max-w-lg glass-panel p-5 sm:p-8 rounded-3xl relative bg-white/95 max-h-[90vh] overflow-y-auto"
       >
         <button
           onClick={onClose}
