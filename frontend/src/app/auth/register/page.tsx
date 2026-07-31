@@ -35,7 +35,18 @@ export default function RegisterPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || JSON.stringify(data.detail) || 'Registration failed.');
+        let msg = 'Registration failed.';
+        if (data.error) {
+          msg = data.error;
+        } else if (typeof data === 'object') {
+          const errors = Object.entries(data).map(([field, errs]) => {
+            const label = field.replace('_', ' ');
+            const errStr = Array.isArray(errs) ? errs.join(' ') : String(errs);
+            return `${label}: ${errStr}`;
+          });
+          if (errors.length > 0) msg = errors.join(' | ');
+        }
+        throw new Error(msg);
       }
 
       setSuccess(true);
