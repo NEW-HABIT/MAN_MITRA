@@ -120,11 +120,11 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-[#090e0c] px-4 py-12">
-      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-[#12b886] opacity-[0.05] blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[#12b886] opacity-[0.03] blur-[130px] pointer-events-none" />
+    <div className="relative min-h-screen flex items-center justify-center bg-[#f4f8fc] px-4 py-12">
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-[#38bdf8] opacity-[0.2] blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[#c084fc] opacity-[0.18] blur-[130px] pointer-events-none" />
 
-      <div className="w-full max-w-xl glass-panel p-8 rounded-3xl relative z-10">
+      <div className="w-full max-w-xl glass-panel p-8 rounded-3xl relative z-10 bg-white/80">
         
         {/* Onboarding Progress Header */}
         <div className="flex items-center justify-between mb-8">
@@ -136,7 +136,7 @@ export default function OnboardingPage() {
               <div
                 key={s}
                 className={`w-8 h-1.5 rounded-full transition-all duration-300 ${
-                  s <= step ? 'bg-[#12b886]' : 'bg-[#0e1714]'
+                  s <= step ? 'bg-[#0284c7]' : 'bg-sky-100'
                 }`}
               />
             ))}
@@ -154,13 +154,13 @@ export default function OnboardingPage() {
               className="space-y-6"
             >
               <div>
-                <h2 className="text-2xl font-bold flex items-center gap-2"><Smile className="text-[#12b886] w-6 h-6" /> Tell us about yourself</h2>
-                <p className="text-xs text-slate-400 mt-1">This helps us tailor suggestions based on your daily routine context.</p>
+                <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Smile className="text-[#0284c7] w-6 h-6" /> Tell us about yourself</h2>
+                <p className="text-xs text-slate-500 mt-1">This helps us tailor suggestions based on your daily routine context.</p>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Date of Birth</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Date of Birth</label>
                   <input
                     type="date"
                     required
@@ -171,9 +171,9 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Gender Identification</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Gender Identification</label>
                   <select
-                    className="w-full glass-input px-4 py-2.5 rounded-xl text-sm"
+                    className="w-full glass-input px-4 py-2.5 rounded-xl text-sm text-slate-800"
                     value={demographics.gender}
                     onChange={(e) => setDemographics({ ...demographics, gender: e.target.value })}
                   >
@@ -185,7 +185,7 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Occupation</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Occupation</label>
                   <input
                     type="text"
                     required
@@ -202,7 +202,7 @@ export default function OnboardingPage() {
                 disabled={!demographics.date_of_birth || !demographics.occupation}
                 className="w-full glow-btn py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 mt-6 cursor-pointer disabled:opacity-50"
               >
-                Continue <ArrowRight className="w-4 h-4" />
+                Continue <ArrowRight className="w-4 h-4 text-white" />
               </button>
             </motion.div>
           )}
@@ -217,21 +217,21 @@ export default function OnboardingPage() {
               className="space-y-6"
             >
               <div>
-                <h2 className="text-2xl font-bold flex items-center gap-2"><Moon className="text-[#12b886] w-6 h-6" /> Stress & Sleep</h2>
-                <p className="text-xs text-slate-400 mt-1">Mental resilience is heavily linked to sleep and active stressors.</p>
+                <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Moon className="text-[#0284c7] w-6 h-6" /> Stress & Sleep</h2>
+                <p className="text-xs text-slate-500 mt-1">Mental resilience is heavily linked to sleep and active stressors.</p>
               </div>
 
               <div className="space-y-6">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-medium text-slate-400">Current Stress Level</label>
-                    <span className="text-sm font-bold text-[#12b886]">{stressLevel}/10</span>
+                    <label className="text-xs font-medium text-slate-600">Current Stress Level</label>
+                    <span className="text-sm font-bold text-[#0284c7]">{stressLevel}/10</span>
                   </div>
                   <input
                     type="range"
                     min="1"
                     max="10"
-                    className="w-full accent-[#12b886] bg-[rgba(18,184,134,0.1)] rounded-lg appearance-none h-2 cursor-pointer"
+                    className="w-full accent-[#0284c7] bg-sky-100 rounded-lg appearance-none h-2 cursor-pointer"
                     value={stressLevel}
                     onChange={(e) => setStressLevel(Number(e.target.value))}
                   />
@@ -243,7 +243,7 @@ export default function OnboardingPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Bedtime</label>
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Bedtime</label>
                     <input
                       type="time"
                       className="w-full glass-input px-4 py-2.5 rounded-xl text-sm"
@@ -252,7 +252,7 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Wake Time</label>
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Wake Time</label>
                     <input
                       type="time"
                       className="w-full glass-input px-4 py-2.5 rounded-xl text-sm"
@@ -266,7 +266,7 @@ export default function OnboardingPage() {
               <div className="flex gap-4 mt-6">
                 <button
                   onClick={() => setStep(1)}
-                  className="flex-1 glass-panel py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="flex-1 glass-panel py-3 rounded-xl text-sm font-semibold text-slate-700 flex items-center justify-center gap-1.5 cursor-pointer hover:bg-sky-50"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
@@ -274,7 +274,7 @@ export default function OnboardingPage() {
                   onClick={() => setStep(3)}
                   className="flex-1 glow-btn py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  Continue <ArrowRight className="w-4 h-4" />
+                  Continue <ArrowRight className="w-4 h-4 text-white" />
                 </button>
               </div>
             </motion.div>
@@ -290,13 +290,13 @@ export default function OnboardingPage() {
               className="space-y-6"
             >
               <div>
-                <h2 className="text-2xl font-bold flex items-center gap-2"><Sparkles className="text-[#12b886] w-6 h-6" /> Sanctuary Preferences</h2>
-                <p className="text-xs text-slate-400 mt-1">Select the tools and goals you want to prioritize in your sanctuary.</p>
+                <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Sparkles className="text-[#0284c7] w-6 h-6" /> Sanctuary Preferences</h2>
+                <p className="text-xs text-slate-500 mt-1">Select the tools and goals you want to prioritize in your sanctuary.</p>
               </div>
 
               <div className="space-y-5">
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5">Primary Goals (Select any)</h3>
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5">Primary Goals (Select any)</h3>
                   <div className="flex flex-wrap gap-2">
                     {goalsList.map((g) => {
                       const selected = goals.includes(g);
@@ -307,8 +307,8 @@ export default function OnboardingPage() {
                           onClick={() => handleGoalToggle(g)}
                           className={`px-3 py-2 rounded-xl text-xs transition-all border cursor-pointer ${
                             selected 
-                              ? 'bg-[#12b886] bg-opacity-20 border-[#12b886] text-[#e6f0ed]' 
-                              : 'glass-panel border-transparent hover:border-[#12b886] border-opacity-30'
+                              ? 'bg-sky-100 border-[#0284c7] text-[#0284c7] font-semibold' 
+                              : 'glass-panel border-sky-100 hover:border-sky-300 text-slate-700'
                           }`}
                         >
                           {g}
@@ -319,7 +319,7 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5">Preferred Exercises (Select any)</h3>
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5">Preferred Exercises (Select any)</h3>
                   <div className="flex flex-wrap gap-2">
                     {prefsList.map((p) => {
                       const selected = prefs.includes(p);
@@ -330,8 +330,8 @@ export default function OnboardingPage() {
                           onClick={() => handlePrefToggle(p)}
                           className={`px-3 py-2 rounded-xl text-xs transition-all border cursor-pointer ${
                             selected 
-                              ? 'bg-[#12b886] bg-opacity-20 border-[#12b886] text-[#e6f0ed]' 
-                              : 'glass-panel border-transparent hover:border-[#12b886] border-opacity-30'
+                              ? 'bg-sky-100 border-[#0284c7] text-[#0284c7] font-semibold' 
+                              : 'glass-panel border-sky-100 hover:border-sky-300 text-slate-700'
                           }`}
                         >
                           {p}
@@ -346,7 +346,7 @@ export default function OnboardingPage() {
                 <button
                   disabled={loading}
                   onClick={() => setStep(2)}
-                  className="flex-1 glass-panel py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="flex-1 glass-panel py-3 rounded-xl text-sm font-semibold text-slate-700 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 hover:bg-sky-50"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
@@ -356,7 +356,7 @@ export default function OnboardingPage() {
                   className="flex-1 glow-btn py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {loading ? 'Creating sanctuary...' : 'Create Sanctuary'}
-                  {!loading && <ShieldCheck className="w-4 h-4" />}
+                  {!loading && <ShieldCheck className="w-4 h-4 text-white" />}
                 </button>
               </div>
             </motion.div>

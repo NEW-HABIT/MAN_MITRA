@@ -14,6 +14,7 @@ import WellnessChecklist from '@/components/wellness-checklist';
 import MoodTracker from '@/components/mood-tracker';
 import ChatPanel from '@/components/chat-panel';
 import JournalPanel from '@/components/journal-panel';
+import ManMitraLogo from '@/components/manmitra-logo';
 import { API_URL } from '@/config';
 
 export default function DashboardPage() {
@@ -102,15 +103,16 @@ export default function DashboardPage() {
   if (!mounted || !user) return null;
 
   return (
-    <div className="flex h-screen bg-[#090e0c] text-[#e6f0ed] overflow-hidden">
+    <div className="flex h-screen bg-[#f4f8fc] text-[#0f172a] overflow-hidden">
       
       {/* ── SIDEBAR NAVIGATION (LEFT) ────────────────────────────────────────── */}
-      <aside className="w-64 glass-panel border-r border-[rgba(18,184,134,0.05)] flex flex-col justify-between p-6">
+      <aside className="w-64 glass-panel border-r border-sky-100 flex flex-col justify-between p-6 bg-white/80">
         <div>
           {/* Logo */}
           <div className="flex items-center gap-2 mb-8 px-2">
-            <span className="text-xl font-bold tracking-tight text-[#12b886] font-outfit">
-              💚 ManMitra
+            <span className="text-xl font-bold tracking-tight text-[#0284c7] font-outfit flex items-center gap-2.5">
+              <ManMitraLogo className="w-7 h-7" />
+              ManMitra
             </span>
           </div>
 
@@ -120,8 +122,8 @@ export default function DashboardPage() {
               onClick={() => setActiveTab('dashboard')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                 activeTab === 'dashboard'
-                  ? 'bg-[#12b886] text-black shadow-lg shadow-emerald-950/20'
-                  : 'text-slate-400 hover:text-white hover:bg-[rgba(18,184,134,0.02)]'
+                  ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
+                  : 'text-slate-600 hover:text-[#0284c7] hover:bg-sky-50/80'
               }`}
             >
               <LayoutDashboard className="w-4 h-4" />
@@ -132,8 +134,8 @@ export default function DashboardPage() {
               onClick={() => setActiveTab('chat')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                 activeTab === 'chat'
-                  ? 'bg-[#12b886] text-black shadow-lg shadow-emerald-950/20'
-                  : 'text-slate-400 hover:text-white hover:bg-[rgba(18,184,134,0.02)]'
+                  ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
+                  : 'text-slate-600 hover:text-[#0284c7] hover:bg-sky-50/80'
               }`}
             >
               <MessageSquare className="w-4 h-4" />
@@ -144,8 +146,8 @@ export default function DashboardPage() {
               onClick={() => setActiveTab('journal')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                 activeTab === 'journal'
-                  ? 'bg-[#12b886] text-black shadow-lg shadow-emerald-950/20'
-                  : 'text-slate-400 hover:text-white hover:bg-[rgba(18,184,134,0.02)]'
+                  ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
+                  : 'text-slate-600 hover:text-[#0284c7] hover:bg-sky-50/80'
               }`}
             >
               <BookOpen className="w-4 h-4" />
@@ -157,8 +159,8 @@ export default function DashboardPage() {
                 onClick={() => setActiveTab('admin')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                   activeTab === 'admin'
-                    ? 'bg-[#12b886] text-black shadow-lg shadow-emerald-950/20'
-                    : 'text-slate-400 hover:text-white hover:bg-[rgba(18,184,134,0.02)]'
+                    ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
+                    : 'text-slate-600 hover:text-[#0284c7] hover:bg-sky-50/80'
                 }`}
               >
                 <BarChart3 className="w-4 h-4" />
@@ -170,21 +172,21 @@ export default function DashboardPage() {
 
         {/* User profile footer */}
         <div className="space-y-4">
-          <div className="flex items-center gap-3 p-2 bg-[rgba(9,14,12,0.3)] rounded-2xl border border-[rgba(18,184,134,0.02)]">
-            <div className="w-9 h-9 rounded-full bg-[#12b886] bg-opacity-10 border border-[#12b886] border-opacity-20 flex items-center justify-center text-xs font-bold text-[#12b886]">
+          <div className="flex items-center gap-3 p-2 bg-sky-50/60 rounded-2xl border border-sky-100">
+            <div className="w-9 h-9 rounded-full bg-sky-100 border border-sky-200 flex items-center justify-center text-xs font-bold text-[#0284c7]">
               {user.full_name.charAt(0)}
             </div>
             <div className="truncate text-left">
-              <h5 className="text-xs font-bold truncate">{user.full_name}</h5>
+              <h5 className="text-xs font-bold truncate text-slate-800">{user.full_name}</h5>
               <span className="text-[10px] text-slate-500 capitalize tracking-wider flex items-center gap-1 font-semibold">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#12b886]" /> {user.role} Sanctuary
+                <ShieldCheck className="w-3.5 h-3.5 text-[#0284c7]" /> {user.role} Sanctuary
               </span>
             </div>
           </div>
 
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-[rgba(239,68,68,0.1)] hover:bg-red-950/10 hover:border-red-500/20 transition-all text-xs font-semibold text-red-400 cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-rose-100 hover:bg-rose-50/80 transition-all text-xs font-semibold text-rose-500 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             Leave Sanctuary
@@ -196,8 +198,8 @@ export default function DashboardPage() {
       <main className="flex-1 flex flex-col overflow-hidden">
         
         {/* Workspace Top Header */}
-        <header className="px-8 py-6 border-b border-[rgba(18,184,134,0.05)] bg-[rgba(9,14,12,0.1)] flex items-center justify-between">
-          <h2 className="text-xl font-bold font-outfit capitalize">{activeTab} Workspace</h2>
+        <header className="px-8 py-6 border-b border-sky-100 bg-white/50 flex items-center justify-between">
+          <h2 className="text-xl font-bold font-outfit capitalize text-slate-900">{activeTab} Workspace</h2>
           <div className="flex items-center gap-4">
             {activeTab === 'dashboard' && (
               <button
@@ -211,7 +213,7 @@ export default function DashboardPage() {
         </header>
 
         {/* Tab Workspace content wrapper */}
-        <div className="flex-1 p-8 overflow-y-auto bg-[rgba(9,14,12,0.05)]">
+        <div className="flex-1 p-8 overflow-y-auto bg-sky-50/30">
           <AnimatePresence mode="wait">
             
             {/* ── TAB: SANCTUARY DASHBOARD ──────────────────────────────────── */}
@@ -224,15 +226,15 @@ export default function DashboardPage() {
                 className="space-y-6"
               >
                 {/* Welcome Card banner */}
-                <div className="glass-panel p-8 rounded-3xl relative overflow-hidden bg-[linear-gradient(135deg,rgba(18,184,134,0.05)_0%,rgba(9,14,12,0.5)_100%)]">
+                <div className="glass-panel p-8 rounded-3xl relative overflow-hidden bg-gradient-to-r from-sky-100/60 to-white text-[#0f172a]">
                   <div className="relative z-10 text-left">
-                    <h3 className="text-2xl font-bold">Hello, {user.full_name}</h3>
-                    <p className="text-xs text-slate-400 mt-1 max-w-xl leading-relaxed">
+                    <h3 className="text-2xl font-bold text-slate-900">Hello, {user.full_name}</h3>
+                    <p className="text-xs text-slate-600 mt-1 max-w-xl leading-relaxed">
                       "Each day is a fresh breath. Take it slow, celebrate your small routines, and check in whenever you need emotional support."
                     </p>
                   </div>
-                  <div className="absolute right-8 bottom-[-20%] opacity-[0.03] scale-150 pointer-events-none">
-                    <Heart className="w-48 h-48 text-[#12b886]" />
+                  <div className="absolute right-8 bottom-[-20%] opacity-[0.06] scale-150 pointer-events-none">
+                    <Heart className="w-48 h-48 text-[#0284c7]" />
                   </div>
                 </div>
 
@@ -249,51 +251,52 @@ export default function DashboardPage() {
                     {/* Streaks stats banner */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="glass-panel p-5 rounded-2xl flex items-center gap-4 text-left">
-                        <div className="w-10 h-10 rounded-xl bg-orange-950/20 border border-orange-500/20 flex items-center justify-center text-orange-400">
-                          <Zap className="w-5 h-5 fill-orange-500" />
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-500">
+                          <Zap className="w-5 h-5 fill-amber-500" />
                         </div>
                         <div>
                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Current Streak</span>
-                          <h4 className="text-lg font-extrabold">{streakStats.current} Days</h4>
+                          <h4 className="text-lg font-extrabold text-slate-800">{streakStats.current} Days</h4>
                         </div>
                       </div>
 
                       <div className="glass-panel p-5 rounded-2xl flex items-center gap-4 text-left">
-                        <div className="w-10 h-10 rounded-xl bg-[#12b886]/10 border border-[#12b886]/20 flex items-center justify-center text-[#12b886]">
+                        <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-[#0284c7]">
                           <Award className="w-5 h-5" />
                         </div>
                         <div>
                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Longest Streak</span>
-                          <h4 className="text-lg font-extrabold">{streakStats.longest} Days</h4>
+                          <h4 className="text-lg font-extrabold text-slate-800">{streakStats.longest} Days</h4>
                         </div>
                       </div>
                     </div>
 
                     {/* Recharts chart */}
                     <div className="glass-panel p-5 rounded-3xl h-[280px]">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 mb-4 text-left">
-                        <TrendingUp className="w-4 h-4 text-[#12b886]" /> Mood Trend Tracker (Last 7 Logs)
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 mb-4 text-left">
+                        <TrendingUp className="w-4 h-4 text-[#0284c7]" /> Mood Trend Tracker (Last 7 Logs)
                       </div>
                       <div className="w-full h-[180px]">
                         {moodTrend.length > 0 ? (
                           <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={moodTrend}>
-                              <XAxis dataKey="name" stroke="#527065" fontSize={9} />
-                              <YAxis stroke="#527065" domain={[1, 10]} fontSize={9} />
+                              <XAxis dataKey="name" stroke="#94a3b8" fontSize={9} />
+                              <YAxis stroke="#94a3b8" domain={[1, 10]} fontSize={9} />
                               <Tooltip 
                                 contentStyle={{ 
-                                  backgroundColor: '#0e1714', 
-                                  borderColor: 'rgba(18,184,134,0.1)', 
+                                  backgroundColor: '#ffffff', 
+                                  borderColor: 'rgba(186,216,245,0.8)', 
                                   borderRadius: '12px',
-                                  fontSize: '10px'
+                                  fontSize: '10px',
+                                  color: '#0f172a'
                                 }} 
                               />
                               <Line 
                                 type="monotone" 
                                 dataKey="score" 
-                                stroke="#12b886" 
+                                stroke="#0284c7" 
                                 strokeWidth={2.5} 
-                                dot={{ fill: '#12b886', strokeWidth: 1 }} 
+                                dot={{ fill: '#0284c7', strokeWidth: 1 }} 
                               />
                             </LineChart>
                           </ResponsiveContainer>
@@ -344,34 +347,34 @@ export default function DashboardPage() {
                 className="space-y-6"
               >
                 <div className="mb-6 text-left">
-                  <h3 className="text-lg font-bold">Admin Platform Control Center</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Real-time system health and anonymized usage indicators.</p>
+                  <h3 className="text-lg font-bold text-slate-900">Admin Platform Control Center</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Real-time system health and anonymized usage indicators.</p>
                 </div>
 
                 {adminStats ? (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-left">
                     <div className="glass-panel p-5 rounded-2xl">
-                      <Users className="w-5 h-5 text-[#12b886] mb-3" />
+                      <Users className="w-5 h-5 text-[#0284c7] mb-3" />
                       <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Total Users</span>
-                      <h4 className="text-xl font-bold mt-1">{adminStats.total_users}</h4>
+                      <h4 className="text-xl font-bold mt-1 text-slate-900">{adminStats.total_users}</h4>
                     </div>
 
                     <div className="glass-panel p-5 rounded-2xl">
-                      <Sparkles className="w-5 h-5 text-[#12b886] mb-3" />
+                      <Sparkles className="w-5 h-5 text-[#0284c7] mb-3" />
                       <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Avg Stress Level</span>
-                      <h4 className="text-xl font-bold mt-1">{adminStats.avg_stress_level}/10</h4>
+                      <h4 className="text-xl font-bold mt-1 text-slate-900">{adminStats.avg_stress_level}/10</h4>
                     </div>
 
                     <div className="glass-panel p-5 rounded-2xl">
-                      <ShieldAlert className="w-5 h-5 text-orange-500 mb-3" />
+                      <ShieldAlert className="w-5 h-5 text-amber-500 mb-3" />
                       <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Crisis Incidents</span>
-                      <h4 className="text-xl font-bold mt-1 text-orange-400">{adminStats.total_crisis_incidents}</h4>
+                      <h4 className="text-xl font-bold mt-1 text-amber-600">{adminStats.total_crisis_incidents}</h4>
                     </div>
 
                     <div className="glass-panel p-5 rounded-2xl">
-                      <Check className="w-5 h-5 text-emerald-400 mb-3" />
+                      <Check className="w-5 h-5 text-emerald-500 mb-3" />
                       <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Crisis Resolution</span>
-                      <h4 className="text-xl font-bold mt-1 text-emerald-400">{adminStats.crisis_resolution_rate}%</h4>
+                      <h4 className="text-xl font-bold mt-1 text-emerald-600">{adminStats.crisis_resolution_rate}%</h4>
                     </div>
                   </div>
                 ) : (

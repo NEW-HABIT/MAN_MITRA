@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { Loader2, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { API_URL } from '@/config';
+import ManMitraLogo from '@/components/manmitra-logo';
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -59,41 +60,42 @@ function VerifyEmailContent() {
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="w-full max-w-md glass-panel p-8 rounded-3xl relative z-10 text-center"
+      className="w-full max-w-md glass-panel p-8 rounded-3xl relative z-10 text-center bg-white/85"
     >
-      <Link href="/" className="inline-flex items-center gap-1.5 text-xl font-bold text-[#12b886] font-outfit mb-8">
-        💚 ManMitra
+      <Link href="/" className="inline-flex items-center gap-2 text-xl font-bold text-[#0284c7] font-outfit mb-8">
+        <ManMitraLogo className="w-7 h-7" />
+        ManMitra
       </Link>
 
       {status === 'verifying' && (
         <div className="py-6">
-          <Loader2 className="w-12 h-12 text-[#12b886] animate-spin mx-auto mb-4" />
-          <h3 className="text-lg font-bold mb-1">Verifying your account</h3>
-          <p className="text-xs text-slate-400">Authenticating details with our servers...</p>
+          <Loader2 className="w-12 h-12 text-[#0284c7] animate-spin mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-slate-900 mb-1">Verifying your account</h3>
+          <p className="text-xs text-slate-500">Authenticating details with our servers...</p>
         </div>
       )}
 
       {status === 'success' && (
         <div className="py-6">
-          <CheckCircle2 className="w-12 h-12 text-[#12b886] mx-auto mb-4 animate-bounce" />
-          <h3 className="text-lg font-bold mb-1">Sanctuary Activated!</h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+          <CheckCircle2 className="w-12 h-12 text-[#0284c7] mx-auto mb-4 animate-bounce" />
+          <h3 className="text-lg font-bold text-slate-900 mb-1">Sanctuary Activated!</h3>
+          <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
             Your email address has been verified. Redirecting you to the onboarding planner...
           </p>
           <button
             onClick={() => router.push('/onboarding')}
             className="glow-btn inline-flex items-center gap-1.5 px-6 py-2 rounded-full text-xs font-semibold mt-6 cursor-pointer"
           >
-            Go to Onboarding <ArrowRight className="w-3.5 h-3.5" />
+            Go to Onboarding <ArrowRight className="w-3.5 h-3.5 text-white" />
           </button>
         </div>
       )}
 
       {status === 'error' && (
         <div className="py-6">
-          <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-bold mb-1 text-red-400">Verification Failed</h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed mb-6">
+          <XCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
+          <h3 className="text-lg font-bold mb-1 text-rose-600">Verification Failed</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed mb-6">
             {errorMsg}
           </p>
           <Link href="/auth/login" className="glow-btn px-6 py-2.5 rounded-full text-xs font-semibold">
@@ -107,14 +109,14 @@ function VerifyEmailContent() {
 
 export default function VerifyEmailPage() {
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-[#090e0c] px-4 py-12">
-      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-[#12b886] opacity-[0.05] blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[#12b886] opacity-[0.03] blur-[130px] pointer-events-none" />
+    <div className="relative min-h-screen flex items-center justify-center bg-[#f4f8fc] px-4 py-12">
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-[#38bdf8] opacity-[0.2] blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[#c084fc] opacity-[0.18] blur-[130px] pointer-events-none" />
 
       <Suspense fallback={
-        <div className="w-full max-w-md glass-panel p-8 rounded-3xl relative z-10 text-center py-12">
-          <Loader2 className="w-12 h-12 text-[#12b886] animate-spin mx-auto mb-4" />
-          <h3 className="text-lg font-bold mb-1">Loading verification...</h3>
+        <div className="w-full max-w-md glass-panel p-8 rounded-3xl relative z-10 text-center py-12 bg-white/85">
+          <Loader2 className="w-12 h-12 text-[#0284c7] animate-spin mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-slate-900 mb-1">Loading verification...</h3>
         </div>
       }>
         <VerifyEmailContent />

@@ -59,37 +59,37 @@ export default function MoodTracker({ accessToken, onClose, onSuccess }: MoodTra
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50 px-4">
+    <div className="fixed inset-0 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm z-50 px-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-lg glass-panel p-8 rounded-3xl relative"
+        className="w-full max-w-lg glass-panel p-8 rounded-3xl relative bg-white/90"
       >
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-slate-500 hover:text-white transition-colors cursor-pointer"
+          className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="mb-6">
-          <h2 className="text-xl font-bold flex items-center gap-2"><Smile className="text-[#12b886]" /> Mood Check-in</h2>
-          <p className="text-xs text-slate-400 mt-1">Reflect on your current emotional state to compile trends.</p>
+        <div className="mb-6 text-left">
+          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2"><Smile className="text-[#0284c7]" /> Mood Check-in</h2>
+          <p className="text-xs text-slate-500 mt-1">Reflect on your current emotional state to compile trends.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Mood Score Slider */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold text-slate-400">Intensity Score</label>
-              <span className="text-sm font-bold text-[#12b886]">{score}/10</span>
+              <label className="text-xs font-semibold text-slate-600">Intensity Score</label>
+              <span className="text-sm font-bold text-[#0284c7]">{score}/10</span>
             </div>
             <input
               type="range"
               min="1"
               max="10"
-              className="w-full accent-[#12b886] bg-[rgba(18,184,134,0.1)] rounded-lg appearance-none h-2 cursor-pointer"
+              className="w-full accent-[#0284c7] bg-sky-100 rounded-lg appearance-none h-2 cursor-pointer"
               value={score}
               onChange={(e) => setScore(Number(e.target.value))}
             />
@@ -97,7 +97,7 @@ export default function MoodTracker({ accessToken, onClose, onSuccess }: MoodTra
 
           {/* Emotion Label Selector */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-3">Dominant Emotion</label>
+            <label className="block text-xs font-semibold text-slate-600 mb-3 text-left">Dominant Emotion</label>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
               {moodChoices.map((item) => {
                 const selected = selectedLabel === item.label;
@@ -108,8 +108,8 @@ export default function MoodTracker({ accessToken, onClose, onSuccess }: MoodTra
                     onClick={() => setSelectedLabel(item.label)}
                     className={`py-2 px-3 rounded-xl border text-xs flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                       selected 
-                        ? 'bg-[#12b886] bg-opacity-20 border-[#12b886] text-[#e6f0ed]' 
-                        : 'glass-panel border-transparent hover:border-[#12b886] border-opacity-30'
+                        ? 'bg-sky-100 border-[#0284c7] text-[#0284c7] font-bold' 
+                        : 'glass-panel border-sky-100 hover:border-sky-300 text-slate-700'
                     }`}
                   >
                     <span className="text-lg">{item.emoji}</span>
@@ -121,8 +121,8 @@ export default function MoodTracker({ accessToken, onClose, onSuccess }: MoodTra
           </div>
 
           {/* Note Input */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1.5">Note (Optional)</label>
+          <div className="text-left">
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5">Note (Optional)</label>
             <textarea
               className="w-full glass-input px-4 py-2.5 rounded-xl text-sm h-20 resize-none"
               placeholder="What is influencing your mood today? Write down any reflections..."
@@ -135,7 +135,7 @@ export default function MoodTracker({ accessToken, onClose, onSuccess }: MoodTra
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 glass-panel py-3 rounded-xl text-xs font-semibold cursor-pointer"
+              className="flex-1 glass-panel py-3 rounded-xl text-xs font-semibold text-slate-700 hover:bg-sky-50 cursor-pointer"
             >
               Cancel
             </button>
@@ -145,7 +145,7 @@ export default function MoodTracker({ accessToken, onClose, onSuccess }: MoodTra
               className="flex-1 glow-btn py-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               {loading ? 'Saving...' : 'Save Check-in'}
-              {!loading && <Check className="w-4 h-4" />}
+              {!loading && <Check className="w-4 h-4 text-white" />}
             </button>
           </div>
         </form>

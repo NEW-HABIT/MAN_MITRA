@@ -208,16 +208,16 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 h-[550px] relative">
       
       {/* Sessions History List Panel (Left) */}
-      <div className="md:col-span-1 glass-panel p-4 rounded-3xl flex flex-col justify-between h-full">
+      <div className="md:col-span-1 glass-panel p-4 rounded-3xl flex flex-col justify-between h-full bg-white/80 border-sky-100">
         <div>
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Conversations</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Conversations</span>
             <button
               onClick={createSession}
-              className="p-1.5 rounded-lg glass-panel hover:border-[#12b886] transition-all cursor-pointer"
+              className="p-1.5 rounded-lg glass-panel hover:border-sky-300 transition-all cursor-pointer text-[#0284c7]"
               title="Start New Chat"
             >
-              <Plus className="w-4 h-4 text-[#12b886]" />
+              <Plus className="w-4 h-4 text-[#0284c7]" />
             </button>
           </div>
           
@@ -230,17 +230,17 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
                   onClick={() => handleSessionChange(s.id)}
                   className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all text-xs cursor-pointer ${
                     active 
-                      ? 'bg-[rgba(18,184,134,0.06)] border-[rgba(18,184,134,0.2)] text-[#e6f0ed]' 
-                      : 'glass-panel border-transparent hover:border-[#12b886] hover:border-opacity-30'
+                      ? 'bg-sky-100 border-[#0284c7] text-[#0284c7] font-semibold' 
+                      : 'glass-panel border-transparent hover:border-sky-200 text-slate-700'
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate">
-                    <MessageSquare className={`w-3.5 h-3.5 ${s.is_crisis ? 'text-amber-500' : 'text-[#12b886]'}`} />
+                    <MessageSquare className={`w-3.5 h-3.5 ${s.is_crisis ? 'text-amber-500' : 'text-[#0284c7]'}`} />
                     <span className="truncate">{s.title}</span>
                   </div>
                   <button
                     onClick={(e) => deleteSession(s.id, e)}
-                    className="opacity-40 hover:opacity-100 transition-opacity cursor-pointer p-0.5 hover:text-red-400"
+                    className="opacity-40 hover:opacity-100 transition-opacity cursor-pointer p-0.5 hover:text-rose-500"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -252,16 +252,16 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
       </div>
 
       {/* Main Chat Conversation Panel (Right) */}
-      <div className="md:col-span-3 glass-panel rounded-3xl flex flex-col justify-between overflow-hidden h-full">
+      <div className="md:col-span-3 glass-panel rounded-3xl flex flex-col justify-between overflow-hidden h-full bg-white/80 border-sky-100">
         
         {/* Chat Session Header */}
-        <div className="px-6 py-4 border-b border-[rgba(18,184,134,0.05)] flex items-center justify-between bg-[rgba(9,14,12,0.3)]">
+        <div className="px-6 py-4 border-b border-sky-100 flex items-center justify-between bg-white/60">
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${
-              status === 'connected' ? 'bg-[#12b886] animate-pulse' : 'bg-red-500'
+              status === 'connected' ? 'bg-[#0284c7] animate-pulse' : 'bg-rose-500'
             }`} />
-            <div>
-              <h4 className="text-xs font-bold font-outfit">
+            <div className="text-left">
+              <h4 className="text-xs font-bold font-outfit text-slate-900">
                 {sessions.find(s => s.id === activeSessionId)?.title || "ManMitra AI Companion"}
               </h4>
               <span className="text-[9px] text-slate-500">
@@ -279,10 +279,10 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
                 const isUser = msg.role === 'user';
                 return (
                   <div key={index} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] p-3.5 rounded-2xl text-xs leading-relaxed ${
+                    <div className={`max-w-[80%] p-3.5 rounded-2xl text-xs leading-relaxed text-left ${
                       isUser 
-                        ? 'bg-[rgba(18,184,134,0.15)] border border-[rgba(18,184,134,0.2)] text-[#e6f0ed] rounded-tr-none' 
-                        : 'glass-panel text-slate-200 rounded-tl-none border-l-2 border-l-[#12b886]'
+                        ? 'bg-[#0284c7] text-white rounded-tr-none shadow-sm' 
+                        : 'bg-white border border-sky-100 text-slate-800 rounded-tl-none border-l-4 border-l-[#0284c7] shadow-sm'
                     }`}>
                       {msg.content}
                     </div>
@@ -292,10 +292,10 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
               
               {typing && (
                 <div className="flex justify-start">
-                  <div className="glass-panel p-3.5 rounded-2xl text-xs text-slate-400 rounded-tl-none flex items-center gap-1.5 border-l-2 border-l-[#12b886]">
-                    <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" />
-                    <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:0.2s]" />
-                    <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:0.4s]" />
+                  <div className="bg-white border border-sky-100 p-3.5 rounded-2xl text-xs text-slate-500 rounded-tl-none flex items-center gap-1.5 border-l-4 border-l-[#0284c7] shadow-sm">
+                    <span className="w-1.5 h-1.5 bg-[#0284c7] rounded-full animate-bounce" />
+                    <span className="w-1.5 h-1.5 bg-[#0284c7] rounded-full animate-bounce [animation-delay:0.2s]" />
+                    <span className="w-1.5 h-1.5 bg-[#0284c7] rounded-full animate-bounce [animation-delay:0.4s]" />
                   </div>
                 </div>
               )}
@@ -304,18 +304,18 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
             </>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-center text-xs text-slate-500">
-              <Sparkles className="w-8 h-8 text-[#12b886] mb-3 opacity-50" />
+              <Sparkles className="w-8 h-8 text-[#0284c7] mb-3 opacity-60" />
               <span>Select or start a conversation from the sidebar history list.</span>
             </div>
           )}
         </div>
 
         {/* Message Input Submit Bar */}
-        <form onSubmit={handleSendMessage} className="p-4 border-t border-[rgba(18,184,134,0.05)] bg-[rgba(9,14,12,0.3)] flex gap-2">
+        <form onSubmit={handleSendMessage} className="p-4 border-t border-sky-100 bg-white/60 flex gap-2">
           <input
             type="text"
             disabled={!activeSessionId || status !== 'connected'}
-            className="flex-1 glass-input px-4 py-2.5 rounded-xl text-xs disabled:opacity-50"
+            className="flex-1 glass-input px-4 py-2.5 rounded-xl text-xs text-slate-800 disabled:opacity-50"
             placeholder="Type your message to ManMitra..."
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
@@ -325,7 +325,7 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
             disabled={!inputMessage.trim() || status !== 'connected'}
             className="glow-btn p-3 rounded-xl flex items-center justify-center cursor-pointer disabled:opacity-50"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4 h-4 text-white" />
           </button>
         </form>
 
@@ -334,39 +334,39 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
       {/* ── CRISIS GUARDRAIL MODAL OVERLAY ────────────────────────────────────── */}
       <AnimatePresence>
         {crisisAlert && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50 px-4">
+          <div className="fixed inset-0 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm z-50 px-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg glass-panel p-8 rounded-3xl relative border border-red-500 border-opacity-30"
+              className="w-full max-w-lg glass-panel p-8 rounded-3xl relative bg-white border border-rose-200 shadow-xl"
             >
               <button
                 onClick={() => setCrisisAlert(null)}
-                className="absolute top-5 right-5 text-slate-500 hover:text-white transition-colors cursor-pointer"
+                className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
               <div className="text-center mb-6">
-                <div className="w-12 h-12 rounded-full bg-red-950 bg-opacity-40 flex items-center justify-center mx-auto mb-4 border border-red-500 border-opacity-30 animate-pulse">
-                  <ShieldAlert className="w-6 h-6 text-red-500" />
+                <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4 border border-rose-200 animate-pulse">
+                  <ShieldAlert className="w-6 h-6 text-rose-600" />
                 </div>
-                <h2 className="text-xl font-bold text-red-400">Emergency Support Lifeline</h2>
-                <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                <h2 className="text-xl font-bold text-rose-600">Emergency Support Lifeline</h2>
+                <p className="text-xs text-slate-600 mt-2 leading-relaxed">
                   {crisisAlert.message}
                 </p>
               </div>
 
               {/* Resources list */}
-              <div className="space-y-3 bg-[#0a0f0d] p-4 rounded-2xl border border-[rgba(18,184,134,0.05)]">
+              <div className="space-y-3 bg-sky-50/60 p-4 rounded-2xl border border-sky-100">
                 <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Available Hotlines (24/7)</h4>
                 {crisisAlert.resources.hotlines.map((hl: any, idx: number) => (
-                  <div key={idx} className="flex items-center justify-between text-xs py-1.5 border-b border-[rgba(18,184,134,0.02)] last:border-b-0">
-                    <span className="font-semibold text-slate-300">{hl.name}</span>
+                  <div key={idx} className="flex items-center justify-between text-xs py-1.5 border-b border-sky-100 last:border-b-0">
+                    <span className="font-semibold text-slate-700">{hl.name}</span>
                     <a 
                       href={`tel:${hl.number}`} 
-                      className="text-[#12b886] font-bold hover:underline"
+                      className="text-[#0284c7] font-bold hover:underline"
                     >
                       {hl.number} ({hl.text})
                     </a>
@@ -374,7 +374,7 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
                 ))}
               </div>
 
-              <div className="text-[10px] text-slate-500 mt-4 leading-relaxed bg-red-950 bg-opacity-10 border border-red-900 border-opacity-10 p-3 rounded-xl italic">
+              <div className="text-[10px] text-rose-700 mt-4 leading-relaxed bg-rose-50 border border-rose-100 p-3 rounded-xl italic">
                 {crisisAlert.resources.instructions}
               </div>
 

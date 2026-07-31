@@ -106,34 +106,34 @@ export default function WellnessChecklist({ accessToken }: WellnessChecklistProp
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
-    <div className="glass-panel p-6 rounded-3xl h-full flex flex-col justify-between">
+    <div className="glass-panel p-6 rounded-3xl h-full flex flex-col justify-between bg-white/80">
       <div>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 text-left">
           <div>
-            <h3 className="text-lg font-bold">Wellness Routines</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Your personalized daily routine.</p>
+            <h3 className="text-lg font-bold text-slate-900">Wellness Routines</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Your personalized daily routine.</p>
           </div>
           <button
             onClick={handleGenerateNew}
             disabled={loading}
-            className="p-2 rounded-xl glass-panel border-transparent hover:border-[#12b886] transition-all cursor-pointer disabled:opacity-50 text-xs font-semibold flex items-center gap-1.5"
+            className="p-2 rounded-xl glass-panel border-sky-100 hover:border-sky-300 transition-all cursor-pointer disabled:opacity-50 text-xs font-semibold text-slate-700 flex items-center gap-1.5"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-[#0284c7] ${loading ? 'animate-spin' : ''}`} />
             Regenerate Plan
           </button>
         </div>
 
         {tasks.length > 0 && (
           <div className="mb-6">
-            <div className="flex items-center justify-between text-xs font-medium text-slate-400 mb-1.5">
+            <div className="flex items-center justify-between text-xs font-medium text-slate-500 mb-1.5">
               <span>Routines Checklist Completed</span>
-              <span>{completedCount}/{totalCount} ({progressPercent}%)</span>
+              <span className="font-semibold text-[#0284c7]">{completedCount}/{totalCount} ({progressPercent}%)</span>
             </div>
-            <div className="w-full bg-[#0a0f0d] rounded-full h-1.5 overflow-hidden border border-[rgba(18,184,134,0.05)]">
+            <div className="w-full bg-sky-100/60 rounded-full h-1.5 overflow-hidden border border-sky-100">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progressPercent}%` }}
-                className="bg-[#12b886] h-full"
+                className="bg-[#0284c7] h-full"
               />
             </div>
           </div>
@@ -150,17 +150,17 @@ export default function WellnessChecklist({ accessToken }: WellnessChecklistProp
                   exit={{ opacity: 0, x: -10 }}
                   className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer ${
                     task.completed 
-                      ? 'bg-[rgba(18,184,134,0.04)] border-[rgba(18,184,134,0.15)] text-slate-400' 
-                      : 'glass-panel border-transparent hover:border-[rgba(18,184,134,0.2)]'
+                      ? 'bg-sky-50/50 border-sky-100 text-slate-400' 
+                      : 'glass-panel border-sky-100 hover:border-sky-300 text-slate-800'
                   }`}
                   onClick={() => handleToggle(dailyPlan!.id, idx, task.completed)}
                 >
-                  <div className="flex items-center gap-3">
-                    <button className="text-[#12b886] focus:outline-none">
+                  <div className="flex items-center gap-3 text-left">
+                    <button className="text-[#0284c7] focus:outline-none">
                       {task.completed ? (
                         <CheckSquare className="w-5 h-5" />
                       ) : (
-                        <Square className="w-5 h-5 text-slate-500" />
+                        <Square className="w-5 h-5 text-slate-400" />
                       )}
                     </button>
                     <div>
@@ -189,9 +189,9 @@ export default function WellnessChecklist({ accessToken }: WellnessChecklistProp
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="mt-6 p-3 rounded-2xl bg-[#12b886] bg-opacity-10 border border-[#12b886] border-opacity-20 flex items-center gap-2.5 text-xs text-[#12b886] font-medium"
+          className="mt-6 p-3 rounded-2xl bg-sky-50 border border-sky-200 flex items-center gap-2.5 text-xs text-[#0284c7] font-medium"
         >
-          <Zap className="w-4 h-4 text-[#12b886]" /> Complete checklist finished! Keep up the wellness journey.
+          <Zap className="w-4 h-4 text-[#0284c7]" /> Complete checklist finished! Keep up the wellness journey.
         </motion.div>
       )}
     </div>
