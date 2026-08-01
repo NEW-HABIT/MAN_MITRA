@@ -1,38 +1,51 @@
-# Python
+# ─────────────────────────────────────────────────────────────
+# ManMitra — Master .gitignore Configuration
+# ─────────────────────────────────────────────────────────────
+
+# Python & Django
 __pycache__/
 *.py[cod]
 *$py.class
 *.pyo
 *.pyd
 .Python
-
-# Virtual environments
-venv/
-env/
-.venv/
-ENV/
-
-# Django
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
 media/
 staticfiles/
+backend/db.sqlite3
+backend/media/
+backend/staticfiles/
 
-# Environment files
+# Virtual Environments
+venv/
+env/
+.venv/
+ENV/
+backend/venv/
+
+# Environment Variables & Secrets
 .env
 .env.*
 !.env.example
+*.env
+backend/.env
+frontend/.env.local
+frontend/.env.production
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
+# Node.js & Next.js Frontend
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+out/
+frontend/out/
+.next-boost/
+.turbo/
 
-# Testing
+# Testing & Coverage
 .coverage
 .pytest_cache/
 htmlcov/
@@ -40,11 +53,11 @@ htmlcov/
 dist/
 build/
 
-# Node (Frontend)
-node_modules/
-.next/
-out/
-frontend/.env.local
-
-DEPLOY_FREE_TIER.md
+# Documentation & System files
 README.md
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

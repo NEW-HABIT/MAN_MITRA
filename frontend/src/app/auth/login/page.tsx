@@ -36,7 +36,12 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get('content-type');
+      let data: any = {};
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      }
+
       if (!res.ok) {
         if (res.status === 403 && data.action === 'resend_verification') {
           setUnverified(true);
@@ -50,7 +55,10 @@ export default function LoginPage() {
       setShowSplash(true);
 
       const profile = data.user.wellness_profile;
-      const targetPath = (!profile || !profile.onboarding_done) ? '/onboarding' : '/dashboard';
+      // Doctors and Admins skip patient onboarding intake
+      const targetPath = (data.user.role === 'user' && (!profile || !profile.onboarding_done)) 
+        ? '/onboarding' 
+        : '/dashboard';
 
       // Allow full-screen animation to play for 2.2 seconds before navigating
       setTimeout(() => {
@@ -178,13 +186,13 @@ export default function LoginPage() {
         </div>
 
         <button
-          onClick={() => alert("Google Sign-In is configured on the backend! In a production deployment, this triggers Google's browser authentication modal.")}
+          onClick={() => alert("Google Sign-In will sign you in securely through your Google account.")}
           className="w-full glass-panel py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:border-sky-300 hover:bg-sky-50/50 transition-all flex items-center justify-center gap-2 cursor-pointer"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path fill="#EA4335" d="M12.24 10.285V14.4h6.887C18.2 16.614 15.645 18 12.24 18c-3.86 0-7-3.14-7-7s3.14-7 7-7c1.7 0 3.3.6 4.6 1.7l3.1-3.1C17.7 1.1 15 0 12.24 0 6.13 0 1.24 4.9 1.24 11s4.9 11 11 11c5.73 0 10.96-4.1 10.96-11 0-.7-.1-1.4-.3-2.1l-9.66.385z" />
           </svg>
-          Google Sanctuary Portal
+          Google Sign-In
         </button>
 
         <div className="text-center text-xs text-slate-500 mt-8">

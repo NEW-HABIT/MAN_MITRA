@@ -32,15 +32,18 @@ export default function WellnessChecklist({ accessToken }: WellnessChecklistProp
       const res = await fetch(`${API_URL}/api/wellness/plans/active/`, {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
-      const data = await res.json();
       if (res.ok) {
-        let plansList: Plan[] = [];
-        if (Array.isArray(data)) {
-          plansList = data;
-        } else if (data && Array.isArray(data.results)) {
-          plansList = data.results;
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          let plansList: Plan[] = [];
+          if (Array.isArray(data)) {
+            plansList = data;
+          } else if (data && Array.isArray(data.results)) {
+            plansList = data.results;
+          }
+          setPlans(plansList);
         }
-        setPlans(plansList);
       }
     } catch (e) {
       console.error(e);
@@ -119,7 +122,7 @@ export default function WellnessChecklist({ accessToken }: WellnessChecklistProp
             className="p-2 rounded-xl glass-panel border-sky-100 hover:border-sky-300 transition-all cursor-pointer disabled:opacity-50 text-xs font-semibold text-slate-700 flex items-center gap-1.5"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-[#0284c7] ${loading ? 'animate-spin' : ''}`} />
-            Regenerate Plan
+            Refresh Routine
           </button>
         </div>
 
@@ -178,7 +181,7 @@ export default function WellnessChecklist({ accessToken }: WellnessChecklistProp
               ))
             ) : (
               <div className="text-center py-10 text-xs text-slate-500">
-                No active routines found. Tap "Regenerate Plan" above to create one.
+                No active routines found. Tap "Refresh Routine" above to create one.
               </div>
             )}
           </AnimatePresence>

@@ -13,12 +13,14 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // Redirect if not logged in
+  // Redirect if not logged in or if user is a Doctor/Admin
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/auth/login');
+    } else if (user?.role === 'therapist' || user?.role === 'admin') {
+      router.push('/dashboard');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   // Form State
   const [demographics, setDemographics] = useState({
@@ -90,7 +92,7 @@ export default function OnboardingPage() {
         }),
       });
 
-      if (!wellnessRes.ok) throw new Error('Failed to save wellness configuration.');
+      if (!wellnessRes.ok) throw new Error('Failed to save wellness preferences.');
 
       // 3. Trigger wellness plan generation
       const genRes = await fetch(`${API_URL}/api/wellness/plans/generate/`, {
@@ -113,7 +115,7 @@ export default function OnboardingPage() {
 
       router.push('/dashboard');
     } catch (e) {
-      alert(e || 'An error occurred during onboarding setup.');
+      alert(e || 'An error occurred during sanctuary setup.');
     } finally {
       setLoading(false);
     }

@@ -36,15 +36,18 @@ export default function JournalPanel({ accessToken }: JournalPanelProps) {
       const res = await fetch(`${API_URL}/api/journal/entries/`, {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
-      const data = await res.json();
       if (res.ok) {
-        let entriesList: JournalEntry[] = [];
-        if (Array.isArray(data)) {
-          entriesList = data;
-        } else if (data && Array.isArray(data.results)) {
-          entriesList = data.results;
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          let entriesList: JournalEntry[] = [];
+          if (Array.isArray(data)) {
+            entriesList = data;
+          } else if (data && Array.isArray(data.results)) {
+            entriesList = data.results;
+          }
+          setEntries(entriesList);
         }
-        setEntries(entriesList);
       }
     } catch (e) {
       console.error(e);
@@ -117,8 +120,8 @@ export default function JournalPanel({ accessToken }: JournalPanelProps) {
     <div className="space-y-6 h-[550px] overflow-y-auto pr-2 text-left">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold text-slate-900">Private Diaries</h3>
-          <p className="text-xs text-slate-500 mt-0.5">Encrypted at rest for your ultimate confidentiality.</p>
+          <h3 className="text-lg font-bold text-slate-900">Personal Journal</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Safe and confidential for your peace of mind.</p>
         </div>
         <button
           onClick={() => setWriteOpen(true)}
@@ -130,7 +133,7 @@ export default function JournalPanel({ accessToken }: JournalPanelProps) {
       </div>
 
       {loading ? (
-        <div className="text-center py-20 text-xs text-slate-500">Loading your private sanctuary files...</div>
+        <div className="text-center py-20 text-xs text-slate-500">Loading your private reflections...</div>
       ) : entries.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {entries.map((entry) => {
@@ -163,7 +166,7 @@ export default function JournalPanel({ accessToken }: JournalPanelProps) {
 
                 <div className="flex items-center justify-between pt-4 border-t border-sky-100 text-[10px]">
                   <span className="flex items-center gap-1 text-slate-500">
-                    <Shield className="w-3.5 h-3.5 text-[#0284c7]" /> Encrypted
+                    <Shield className="w-3.5 h-3.5 text-[#0284c7]" /> Private
                   </span>
                   <span className={`${sentiment.color}`}>
                     {sentiment.label}
@@ -209,12 +212,12 @@ export default function JournalPanel({ accessToken }: JournalPanelProps) {
               </div>
 
               <div className="flex items-center justify-between mt-6 text-[10px] text-slate-500 border-t border-sky-100 pt-4">
-                <span className="flex items-center gap-1.5"><Shield className="w-4 h-4 text-[#0284c7]" /> AES-256 Decrypted Session</span>
+                <span className="flex items-center gap-1.5"><Shield className="w-4 h-4 text-[#0284c7]" /> Private Reflection</span>
                 <button
                   onClick={() => setReadEntry(null)}
                   className="glow-btn px-6 py-2 rounded-full text-xs font-semibold"
                 >
-                  Close File
+                  Close Journal
                 </button>
               </div>
             </motion.div>
@@ -240,8 +243,8 @@ export default function JournalPanel({ accessToken }: JournalPanelProps) {
               </button>
 
               <div className="mb-6">
-                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2"><Edit3 className="text-[#0284c7] w-5 h-5" /> Write private diary</h3>
-                <p className="text-xs text-slate-500 mt-1">Reflect on your day. Entries are encrypted locally before saving.</p>
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2"><Edit3 className="text-[#0284c7] w-5 h-5" /> Write in Your Journal</h3>
+                <p className="text-xs text-slate-500 mt-1">Reflect on your day. Your reflections are completely private.</p>
               </div>
 
               <form onSubmit={handleCreate} className="space-y-4">
@@ -257,7 +260,7 @@ export default function JournalPanel({ accessToken }: JournalPanelProps) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Sanctuary Text Content</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Journal Entry</label>
                   <textarea
                     required
                     className="w-full glass-input px-4 py-3 rounded-xl text-xs text-slate-900 h-[180px] leading-relaxed resize-none"
@@ -280,7 +283,7 @@ export default function JournalPanel({ accessToken }: JournalPanelProps) {
                     disabled={saving || !newContent.trim()}
                     className="flex-1 glow-btn py-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
-                    {saving ? 'Encrypting & Saving...' : 'Encrypt & Save'}
+                    {saving ? 'Saving...' : 'Save Entry'}
                   </button>
                 </div>
               </form>

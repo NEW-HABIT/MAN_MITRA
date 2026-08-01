@@ -75,14 +75,14 @@ export default function MoodTracker({ accessToken, onClose, onSuccess }: MoodTra
 
         <div className="mb-6 text-left">
           <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2"><Smile className="text-[#0284c7]" /> Mood Check-in</h2>
-          <p className="text-xs text-slate-500 mt-1">Reflect on your current emotional state to compile trends.</p>
+          <p className="text-xs text-slate-500 mt-1">Reflect on your current emotional state.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Mood Score Slider */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold text-slate-600">Intensity Score</label>
+              <label className="text-xs font-semibold text-slate-600">Emotional Intensity</label>
               <span className="text-sm font-bold text-[#0284c7]">{score}/10</span>
             </div>
             <input

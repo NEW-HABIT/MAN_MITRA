@@ -47,17 +47,20 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
       const res = await fetch(`${API_URL}/api/chat/sessions/`, {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
-      const data = await res.json();
       if (res.ok) {
-        let sessionsList: ChatSession[] = [];
-        if (Array.isArray(data)) {
-          sessionsList = data;
-        } else if (data && Array.isArray(data.results)) {
-          sessionsList = data.results;
-        }
-        setSessions(sessionsList);
-        if (sessionsList.length > 0 && !activeSessionId) {
-          setActiveSessionId(sessionsList[0].id);
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          let sessionsList: ChatSession[] = [];
+          if (Array.isArray(data)) {
+            sessionsList = data;
+          } else if (data && Array.isArray(data.results)) {
+            sessionsList = data.results;
+          }
+          setSessions(sessionsList);
+          if (sessionsList.length > 0 && !activeSessionId) {
+            setActiveSessionId(sessionsList[0].id);
+          }
         }
       }
     } catch (e) {
@@ -87,10 +90,13 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
           'Authorization': `Bearer ${accessToken}`,
         },
       });
-      const data = await res.json();
       if (res.ok) {
-        setSessions(prev => [data, ...prev]);
-        setActiveSessionId(data.id);
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          setSessions(prev => [data, ...prev]);
+          setActiveSessionId(data.id);
+        }
       }
     } catch (e) {
       console.error(e);
@@ -126,16 +132,19 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
         const res = await fetch(`${API_URL}/api/chat/sessions/${activeSessionId}/messages/`, {
           headers: { 'Authorization': `Bearer ${accessToken}` },
         });
-        const data = await res.json();
         if (res.ok) {
-          let messagesList: ChatMessage[] = [];
-          if (Array.isArray(data)) {
-            messagesList = data;
-          } else if (data && Array.isArray(data.results)) {
-            messagesList = data.results;
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const data = await res.json();
+            let messagesList: ChatMessage[] = [];
+            if (Array.isArray(data)) {
+              messagesList = data;
+            } else if (data && Array.isArray(data.results)) {
+              messagesList = data.results;
+            }
+            setMessages(messagesList);
+            setTimeout(scrollToBottom, 100);
           }
-          setMessages(messagesList);
-          setTimeout(scrollToBottom, 100);
         }
       } catch (e) {
         console.error(e);
@@ -263,10 +272,10 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
             }`} />
             <div className="text-left">
               <h4 className="text-xs font-bold font-outfit text-slate-900">
-                {sessions.find(s => s.id === activeSessionId)?.title || "ManMitra AI Companion"}
+                {sessions.find(s => s.id === activeSessionId)?.title || "ManMitra Companion"}
               </h4>
               <span className="text-[9px] text-slate-500">
-                {status === 'connected' ? 'Secure session active' : 'Connecting to sanctuary...'}
+                {status === 'connected' ? 'Connected and listening' : 'Connecting to sanctuary...'}
               </span>
             </div>
           </div>

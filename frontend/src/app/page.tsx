@@ -187,18 +187,18 @@ export default function LandingPage() {
             {[
               {
                 icon: <Heart className="w-7 h-7 text-[#0284c7]" />,
-                title: "Empathetic AI Chat",
+                title: "Empathetic Companion",
                 desc: "Talk to a companion built specifically for validation, support, and guidance. Completely judgment-free."
               },
               {
                 icon: <Shield className="w-7 h-7 text-[#0284c7]" />,
                 title: "Encrypted Diaries",
-                desc: "Your diaries are fully encrypted at rest using AES-256 keys. Private logs remain completely yours."
+                desc: "Your private journal is guarded with state-of-the-art security. Your reflections remain completely yours."
               },
               {
                 icon: <Compass className="w-7 h-7 text-[#0284c7]" />,
                 title: "Personalized Routines",
-                desc: "Convert stress factors into structured routines containing PMR, breathing exercises, and trackers."
+                desc: "Convert stress factors into structured routines containing guided muscle relaxation, breathing exercises, and trackers."
               }
             ].map((pillar, idx) => (
               <motion.div
@@ -228,7 +228,7 @@ export default function LandingPage() {
       <footer className="w-full py-8 text-center text-[10px] text-slate-500 max-w-4xl px-8 border-t border-sky-100 mt-16 z-10">
         <p className="mb-2">© 2026 ManMitra. Built with care for emotional resilience and support.</p>
         <p className="max-w-2xl mx-auto leading-relaxed">
-          <strong>Disclaimer:</strong> ManMitra is an AI wellness assistant, not a replacement for professional diagnostic assessments, medical advice, or clinical therapies. In a crisis or emergency, please contact professional help immediately.
+          <strong>Disclaimer:</strong> ManMitra is a personal wellness companion, not a replacement for professional diagnostic assessments, medical advice, or clinical therapies. In a crisis or emergency, please contact professional help immediately.
         </p>
       </footer>
     </div>

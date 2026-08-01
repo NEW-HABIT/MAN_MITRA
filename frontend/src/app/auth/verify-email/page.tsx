@@ -21,7 +21,7 @@ function VerifyEmailContent() {
     const token = searchParams.get('token');
     if (!token) {
       setStatus('error');
-      setErrorMsg('No verification token provided in the URL link.');
+      setErrorMsg('No verification link provided.');
       return;
     }
 
@@ -33,7 +33,11 @@ function VerifyEmailContent() {
           body: JSON.stringify({ token }),
         });
 
-        const data = await res.json();
+        const contentType = res.headers.get('content-type');
+        let data: any = {};
+        if (contentType && contentType.includes('application/json')) {
+          data = await res.json();
+        }
         if (!res.ok) {
           throw new Error(data.error || 'Verification failed.');
         }
@@ -71,7 +75,7 @@ function VerifyEmailContent() {
         <div className="py-6">
           <Loader2 className="w-12 h-12 text-[#0284c7] animate-spin mx-auto mb-4" />
           <h3 className="text-lg font-bold text-slate-900 mb-1">Verifying your account</h3>
-          <p className="text-xs text-slate-500">Authenticating details with our servers...</p>
+          <p className="text-xs text-slate-500">Preparing your sanctuary space...</p>
         </div>
       )}
 
@@ -116,7 +120,7 @@ export default function VerifyEmailPage() {
       <Suspense fallback={
         <div className="w-full max-w-md glass-panel p-8 rounded-3xl relative z-10 text-center py-12 bg-white/85">
           <Loader2 className="w-12 h-12 text-[#0284c7] animate-spin mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-slate-900 mb-1">Loading verification...</h3>
+          <h3 className="text-lg font-bold text-slate-900 mb-1">Verifying email...</h3>
         </div>
       }>
         <VerifyEmailContent />

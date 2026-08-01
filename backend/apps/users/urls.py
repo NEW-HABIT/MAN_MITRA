@@ -19,6 +19,13 @@ from .views import (
     WellnessProfileView,
     GoogleOAuthView,
     AdminDashboardView,
+    AdminDoctorCreateView,
+    AdminClientCreateView,
+    AdminMemberCreateView,
+    AdminUserUpdateView,
+    AdminAssignPatientView,
+    TherapistPatientsView,
+    TherapistScheduleView,
 )
 
 app_name = 'users'
@@ -52,6 +59,15 @@ urlpatterns = [
     # ── Social Auth ──────────────────────────────────────────────────────────
     path('google/', GoogleOAuthView.as_view(), name='google-oauth'),
 
+    # ── Specialist / Therapist Portal ───────────────────────────────────────
+    path('therapist/patients/', TherapistPatientsView.as_view(), name='therapist-patients'),
+    path('therapist/schedule/', TherapistScheduleView.as_view(), name='therapist-schedule'),
+
     # ── Admin Panel ──────────────────────────────────────────────────────────
     path('admin/dashboard/', AdminDashboardView.as_view(), name='admin-dashboard'),
+    path('admin/doctors/', AdminDoctorCreateView.as_view(), name='admin-doctor-create'),
+    path('admin/clients/', AdminClientCreateView.as_view(), name='admin-client-create'),
+    path('admin/members/', AdminMemberCreateView.as_view(), name='admin-member-create'),
+    path('admin/users/<uuid:user_id>/', AdminUserUpdateView.as_view(), name='admin-user-update'),
+    path('admin/assign-patient/', AdminAssignPatientView.as_view(), name='admin-assign-patient'),
 ]

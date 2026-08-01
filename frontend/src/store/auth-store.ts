@@ -6,6 +6,8 @@ interface User {
   full_name: string;
   role: 'user' | 'therapist' | 'admin';
   is_verified: boolean;
+  occupation?: string;
+  phone_number?: string;
   wellness_profile?: {
     sleep_schedule?: { bedtime: string; wake_time: string };
     stress_level?: number;

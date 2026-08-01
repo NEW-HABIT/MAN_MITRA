@@ -159,3 +159,47 @@ class WellnessProfile(models.Model):
 
     def __str__(self) -> str:
         return f'WellnessProfile({self.user.email})'
+
+
+class Appointment(models.Model):
+    """
+    Routine consultation booking schedule between Client and Doctor.
+    """
+    class Status(models.TextChoices):
+        UPCOMING = 'Upcoming', 'Upcoming'
+        COMPLETED = 'Completed', 'Completed'
+        SCHEDULED = 'Scheduled', 'Scheduled'
+        CANCELLED = 'Cancelled', 'Cancelled'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='doctor_appointments')
+    client = models.ForeignKey(User, on_delete=models.CASCADE, related_name='client_appointments')
+    time_slot = models.CharField(max_length=100, help_text='e.g. 09:00 AM - 09:45 AM')
+    session_type = models.CharField(max_length=255, default='Cognitive Behavioral Therapy (CBT)')
+    meeting_type = models.CharField(max_length=100, default='Online Video Call')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.UPCOMING)
+    date = models.DateField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['date', 'time_slot']
+
+    def __str__(self) -> str:
+        return f'{self.doctor.full_name} with {self.client.full_name} ({self.time_slot})'
+
+
+class DoctorCareNote(models.Model):
+    """
+    Clinical progress observations recorded by Doctor for a specific Client.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recorded_notes')
+    client = models.ForeignKey(User, on_delete=models.CASCADE, related_name='clinical_notes')
+    content = models.TextField()
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    def __str__(self) -> str:
+        return f'Note for {self.client.full_name} by {self.doctor.full_name}'

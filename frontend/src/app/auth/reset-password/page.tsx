@@ -68,7 +68,11 @@ function ResetPasswordContent() {
         body: JSON.stringify({ token, password, password_confirm: passwordConfirm }),
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get('content-type');
+      let data: any = {};
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      }
       if (!res.ok) {
         throw new Error(data.error || 'Password reset failed.');
       }
@@ -208,7 +212,7 @@ export default function ResetPasswordPage() {
       <Suspense fallback={
         <div className="w-full max-w-md glass-panel p-8 rounded-3xl relative z-10 text-center py-12 bg-white/85">
           <Loader2 className="w-12 h-12 text-[#0284c7] animate-spin mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-slate-900 mb-1">Loading password configuration...</h3>
+          <h3 className="text-lg font-bold text-slate-900 mb-1">Loading password reset...</h3>
         </div>
       }>
         <ResetPasswordContent />

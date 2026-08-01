@@ -22,16 +22,15 @@ class IsVerifiedUser(BasePermission):
 
 class IsAdminRole(BasePermission):
     """
-    Allows access only to users with the 'admin' role.
-    Note: This is the ManMitra platform admin, distinct from Django's is_staff.
+    Allows access only to users with the 'admin' role, or staff/superusers.
     """
     message = 'This action requires administrator privileges.'
 
     def has_permission(self, request, view) -> bool:
-        return (
+        return bool(
             request.user
             and request.user.is_authenticated
-            and request.user.role == 'admin'
+            and (request.user.role == 'admin' or request.user.is_staff or request.user.is_superuser)
         )
 
 

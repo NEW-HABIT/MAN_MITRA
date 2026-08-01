@@ -33,12 +33,17 @@ export default function RegisterPage() {
         body: JSON.stringify(formData),
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get('content-type');
+      let data: any = {};
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      }
+
       if (!res.ok) {
         let msg = 'Registration failed.';
         if (data.error) {
           msg = data.error;
-        } else if (typeof data === 'object') {
+        } else if (typeof data === 'object' && Object.keys(data).length > 0) {
           const errors = Object.entries(data).map(([field, errs]) => {
             const label = field.replace('_', ' ');
             const errStr = Array.isArray(errs) ? errs.join(' ') : String(errs);
@@ -92,7 +97,7 @@ export default function RegisterPage() {
               Please click the link in your inbox to activate your account.
             </p>
             <p className="text-[10px] text-slate-400 mt-4 italic">
-              (Development hint: Django is printing the email to the backend terminal!)
+              If you don't see the email, please check your spam or updates folder.
             </p>
             <Link href="/auth/login" className="glow-btn inline-flex items-center gap-1.5 px-6 py-2.5 rounded-full text-xs font-semibold mt-6">
               Go to Login <ArrowRight className="w-3.5 h-3.5 text-white" />

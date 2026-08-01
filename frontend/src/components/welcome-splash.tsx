@@ -152,7 +152,7 @@ export default function WelcomeSplash({ userName, subtitle, onDismiss }: Welcome
         >
           <Compass className="w-4 h-4 text-[#0284c7] animate-spin [animation-duration:10s]" />
           <ShieldCheck className="w-4 h-4 text-[#0284c7]" />
-          <span>Zen Sanctuary Active</span>
+          <span>Sanctuary Ready</span>
         </motion.div>
 
       </div>
