@@ -4,15 +4,20 @@ const getApiUrl = () => {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
   }
-  if (typeof window !== 'undefined' && window.location.hostname) {
-    return `http://${window.location.hostname}:8000`;
+  if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    const protocol = window.location.protocol === 'https:' ? 'https' : 'http';
+    return `${protocol}://${window.location.hostname}`;
   }
   return 'http://127.0.0.1:8000';
 };
 
 export const API_URL = getApiUrl();
 
-// Compute the matching WebSocket URL dynamically (http -> ws, https -> wss)
-export const WS_URL = API_URL.replace(/^http/, 'ws');
+const getWsUrl = () => {
+  if (process.env.NEXT_PUBLIC_WS_URL) {
+    return process.env.NEXT_PUBLIC_WS_URL.replace(/\/$/, '');
+  }
+  return API_URL.replace(/^http/, 'ws');
+};
 
-
+export const WS_URL = getWsUrl();

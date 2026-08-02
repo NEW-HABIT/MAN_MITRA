@@ -12,7 +12,7 @@ django.setup()
 
 # Import Channels components after django.setup()
 from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.security.websocket import AllowedHostsOriginValidator
+from channels.security.websocket import OriginValidator
 from apps.chat.middleware import JWTAuthMiddleware
 from apps.chat.routing import websocket_urlpatterns
 
@@ -21,11 +21,14 @@ application = ProtocolTypeRouter({
     "http": get_asgi_application(),
 
     # WebSocket requests handled by custom JWT middleware + routing
-    "websocket": AllowedHostsOriginValidator(
+    # OriginValidator with ["*"] permits connections from your Vercel frontend domain (https://man-mitra-nine.vercel.app)
+    # while JWTAuthMiddleware validates the JWT token for user security.
+    "websocket": OriginValidator(
         JWTAuthMiddleware(
             URLRouter(
                 websocket_urlpatterns
             )
-        )
+        ),
+        ["*"]
     ),
 })

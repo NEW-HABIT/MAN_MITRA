@@ -36,9 +36,12 @@ services:
       - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: AI_PROVIDER
-        value: gemini
+        value: huggingface
+      - key: HF_TOKEN
+        sync: false
       - key: GEMINI_API_KEY
         sync: false
+
       - key: SUPERUSER_EMAIL
         sync: false
       - key: SUPERUSER_PASSWORD

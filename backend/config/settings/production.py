@@ -10,6 +10,8 @@ import dj_database_url
 DEBUG = False
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=lambda v: [s.strip() for s in v.split(',') if s.strip()])
+if '*' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('*')
 
 # Auto-detect Render external hostname for ALLOWED_HOSTS
 RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default='')
@@ -17,6 +19,7 @@ if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
     if not RENDER_EXTERNAL_HOSTNAME.endswith('.onrender.com'):
         ALLOWED_HOSTS.append(f"{RENDER_EXTERNAL_HOSTNAME}.onrender.com")
+
 
 
 # ─────────────────────────────────────────────
@@ -59,20 +62,23 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
 # ─────────────────────────────────────────────
-# CORS & CSRF — Restricted to known frontend origins
+# CORS & CSRF — Production Origins
 # ─────────────────────────────────────────────
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=bool)
+CORS_ALLOW_CREDENTIALS = True
+
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
     default='https://manmitra.ai,https://www.manmitra.ai',
     cast=lambda v: [s.rstrip('/').strip() for s in v.split(',') if s.strip()]
 )
-CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = config(
     'CSRF_TRUSTED_ORIGINS',
     default=','.join(CORS_ALLOWED_ORIGINS) if CORS_ALLOWED_ORIGINS else 'https://manmitra.ai',
     cast=lambda v: [s.rstrip('/').strip() for s in v.split(',') if s.strip()]
 )
+
 
 
 # ─────────────────────────────────────────────
