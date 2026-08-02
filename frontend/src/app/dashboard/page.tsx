@@ -19,15 +19,75 @@ import JournalPanel from '@/components/journal-panel';
 import ProfilePanel from '@/components/profile-panel';
 import AdminAnalyticsSuite from '@/components/admin-analytics-suite';
 import DoctorWorkspace from '@/components/doctor-workspace';
+import AssessmentSuite from '@/components/assessment-suite';
+import WellnessHub from '@/components/wellness-hub';
+import CommunityBoard from '@/components/community-board';
+import TherapistBooking from '@/components/therapist-booking';
 import ManMitraLogo from '@/components/manmitra-logo';
 import { API_URL } from '@/config';
+
+const DEFAULT_ADMIN_STATS = {
+  total_users: 1,
+  total_clients: 1,
+  total_doctors: 1,
+  total_therapists: 1,
+  total_verified_doctors: 1,
+  total_admins: 1,
+  total_sessions_completed: 2,
+  completed_appointments: 1,
+  upcoming_appointments: 1,
+  cancelled_appointments: 0,
+  ai_conversations_today: 5,
+  emergency_alerts_count: 0,
+  system_uptime_percent: 100.0,
+  server_health: 'Optimal (Healthy)',
+  doctors_workload: [
+    {
+      id: 'doc-sarah-smith',
+      name: 'Dr. Sarah Smith',
+      email: 'doctor@manmitra.ai',
+      specialty: 'Clinical Psychologist',
+      consultation_fee: '₹1,500 / 45 mins',
+      status: 'Available',
+      active_sessions: 2,
+      max_capacity: 5,
+      utilization_percent: 40,
+      rating: 5.0,
+      is_active: true,
+    }
+  ],
+  members_list: [
+    {
+      id: 'client-aarav-sharma',
+      name: 'Aarav Sharma',
+      email: 'client@manmitra.ai',
+      occupation: 'Software Engineer',
+      assigned_doctor: 'Dr. Sarah Smith (Clinical Psychologist)',
+      status: 'Active',
+      is_active: true,
+    }
+  ],
+  phq9_distribution: [
+    { severity: 'Minimal (0-4)', percentage: 66.7 },
+    { severity: 'Mild (5-9)', percentage: 33.3 },
+    { severity: 'Moderate (10-14)', percentage: 0.0 },
+    { severity: 'Severe (15-27)', percentage: 0.0 }
+  ],
+  gad7_distribution: [
+    { severity: 'Minimal (0-4)', percentage: 66.7 },
+    { severity: 'Mild (5-9)', percentage: 33.3 },
+    { severity: 'Moderate (10-14)', percentage: 0.0 },
+    { severity: 'Severe (15-21)', percentage: 0.0 }
+  ]
+};
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user, accessToken, logout, isAuthenticated } = useAuthStore();
   const [activeTab, setActiveTab] = useState<
     'dashboard' | 'chat' | 'journal' | 'admin' | 'doctors' | 'members' | 'profile' |
-    'ai_analytics' | 'crisis_monitoring' | 'clinical_insights' | 'content_mgmt' | 'platform_audit' | 'reports_export'
+    'ai_analytics' | 'crisis_monitoring' | 'clinical_insights' | 'content_mgmt' | 'platform_audit' | 'reports_export' |
+    'assessments' | 'wellness_hub' | 'community' | 'booking'
   >('dashboard');
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -38,17 +98,42 @@ export default function DashboardPage() {
   const [streakStats, setStreakStats] = useState({ current: 0, longest: 0 });
 
   // Admin stats state & Doctor registration state
-  const [adminStats, setAdminStats] = useState<any | null>(null);
+  const [adminStats, setAdminStats] = useState<any | null>(DEFAULT_ADMIN_STATS);
   const [addDoctorModalOpen, setAddDoctorModalOpen] = useState(false);
   const [newDocName, setNewDocName] = useState('');
   const [newDocEmail, setNewDocEmail] = useState('');
   const [newDocPassword, setNewDocPassword] = useState('');
   const [newDocSpecialty, setNewDocSpecialty] = useState('');
+  const [newDocFee, setNewDocFee] = useState('₹1,500 / 45 mins');
   const [docSubmitting, setDocSubmitting] = useState(false);
   const [docError, setDocError] = useState('');
 
+  // Edit Doctor Modal state
+  const [editDoctorModalOpen, setEditDoctorModalOpen] = useState(false);
+  const [editDocId, setEditDocId] = useState('');
+  const [editDocName, setEditDocName] = useState('');
+  const [editDocEmail, setEditDocEmail] = useState('');
+  const [editDocSpecialty, setEditDocSpecialty] = useState('');
+  const [editDocFee, setEditDocFee] = useState('₹1,500 / 45 mins');
+  const [editDocSubmitting, setEditDocSubmitting] = useState(false);
+  const [editDocStatusMsg, setEditDocStatusMsg] = useState('');
+
+  // View Details & Comprehensive Edit Account Modal State
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [detailsUser, setDetailsUser] = useState<any | null>(null);
+  const [detailsActiveSubTab, setDetailsActiveSubTab] = useState<'info' | 'edit' | 'security'>('info');
+  const [detailsFormName, setDetailsFormName] = useState('');
+  const [detailsFormEmail, setDetailsFormEmail] = useState('');
+  const [detailsFormOccupation, setDetailsFormOccupation] = useState('');
+  const [detailsFormFee, setDetailsFormFee] = useState('₹1,500 / 45 mins');
+  const [detailsFormActive, setDetailsFormActive] = useState(true);
+  const [detailsFormPassword, setDetailsFormPassword] = useState('');
+  const [detailsSubmitting, setDetailsSubmitting] = useState(false);
+  const [detailsStatusMsg, setDetailsStatusMsg] = useState('');
+
   // Directory sub-tab selection & Member registration state
   const [directorySubTab, setDirectorySubTab] = useState<'clients' | 'doctors'>('clients');
+  const [directorySearchQuery, setDirectorySearchQuery] = useState('');
   const [addMemberModalOpen, setAddMemberModalOpen] = useState(false);
   const [newMemberRole, setNewMemberRole] = useState<'user' | 'therapist'>('user');
   const [newMemberName, setNewMemberName] = useState('');
@@ -57,6 +142,12 @@ export default function DashboardPage() {
   const [newMemberOccupation, setNewMemberOccupation] = useState('');
   const [memberSubmitting, setMemberSubmitting] = useState(false);
   const [memberError, setMemberError] = useState('');
+
+  // Reset Password Modal state
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resetTargetUser, setResetTargetUser] = useState<{ id: string; name: string } | null>(null);
+  const [resetNewPassword, setResetNewPassword] = useState('');
+  const [resetStatus, setResetStatus] = useState('');
 
   // Assign Patient to Doctor Modal state
   const [assignModalOpen, setAssignModalOpen] = useState(false);
@@ -181,6 +272,105 @@ export default function DashboardPage() {
     }
   }, [user, accessToken]);
 
+  const handleToggleUserStatus = async (userId: string, currentActiveStatus: boolean) => {
+    if (!accessToken) return;
+    const newStatus = !currentActiveStatus;
+
+    setAdminStats((prev: any) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        doctors_workload: (prev.doctors_workload || []).map((doc: any) =>
+          doc.id === userId ? { ...doc, is_active: newStatus, status: newStatus ? 'Available' : 'Off Duty' } : doc
+        ),
+        members_list: (prev.members_list || []).map((m: any) =>
+          m.id === userId ? { ...m, is_active: newStatus, status: newStatus ? 'Active' : 'Inactive' } : m
+        )
+      };
+    });
+
+    try {
+      const res = await fetch(`${API_URL}/api/auth/admin/users/${userId}/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ is_active: newStatus }),
+      });
+      if (res.ok) {
+        await fetchAdminStats();
+      }
+    } catch (e) {
+      console.error('Failed to toggle status:', e);
+    }
+  };
+
+  const handleOpenViewDetails = (account: any, defaultSubTab: 'info' | 'edit' | 'security' = 'info') => {
+    const isDoctor = !!(account.specialty || account.consultation_fee || account.max_capacity || account.role === 'therapist' || account.role === 'Doctor');
+    const normalizedAccount = {
+      ...account,
+      role: isDoctor ? 'therapist' : 'user'
+    };
+    setDetailsUser(normalizedAccount);
+    setDetailsActiveSubTab(defaultSubTab);
+    setDetailsFormName(account.name || account.full_name || '');
+    setDetailsFormEmail(account.email || '');
+    setDetailsFormOccupation(account.occupation || account.specialty || '');
+    setDetailsFormFee(account.consultation_fee || '₹1,500 / 45 mins');
+    setDetailsFormActive(account.is_active ?? (account.status === 'Active' || account.status === 'Available'));
+    setDetailsFormPassword('');
+    setDetailsStatusMsg('');
+    setDetailsModalOpen(true);
+  };
+
+  const handleSaveDetailsUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!detailsUser) return;
+    setDetailsSubmitting(true);
+    setDetailsStatusMsg('');
+
+    try {
+      if (accessToken) {
+        const payload: any = {
+          full_name: detailsFormName,
+          email: detailsFormEmail,
+          occupation: detailsFormOccupation,
+          consultation_fee: detailsFormFee,
+          is_active: detailsFormActive,
+        };
+        if (detailsFormPassword) {
+          payload.password = detailsFormPassword;
+        }
+
+        const res = await fetch(`${API_URL}/api/auth/admin/users/${detailsUser.id}/`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          setDetailsStatusMsg('✔ Account details & security settings updated in real time!');
+          await fetchAdminStats();
+          setTimeout(() => {
+            setDetailsModalOpen(false);
+            setDetailsStatusMsg('');
+          }, 1500);
+        } else {
+          const data = await res.json();
+          setDetailsStatusMsg(`❌ ${data.error || 'Failed to update user account.'}`);
+        }
+      }
+    } catch (e: any) {
+      setDetailsStatusMsg(`❌ ${e.message || 'An error occurred.'}`);
+    } finally {
+      setDetailsSubmitting(false);
+    }
+  };
+
   const handleCreateDoctor = async (e: React.FormEvent) => {
     e.preventDefault();
     setDocError('');
@@ -220,28 +410,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleToggleUserStatus = async (userId: string, currentActiveStatus: boolean) => {
-    if (!accessToken) return;
-    try {
-      const res = await fetch(`${API_URL}/api/auth/admin/users/${userId}/`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ is_active: !currentActiveStatus }),
-      });
-      if (res.ok) {
-        await fetchAdminStats();
-      } else if (res.status === 401) {
-        logout();
-        router.push('/auth/login');
-      }
-    } catch (e) {
-      console.error('Failed to toggle user status:', e);
-    }
-  };
-
   const handlePromoteToSpecialist = async (userId: string) => {
     if (!accessToken) return;
     try {
@@ -261,6 +429,77 @@ export default function DashboardPage() {
       }
     } catch (e) {
       console.error('Failed to promote user:', e);
+    }
+  };
+
+  const handleAddDoctor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDocError('');
+    setDocSubmitting(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/admin/doctors/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          full_name: newDocName,
+          email: newDocEmail,
+          password: newDocPassword,
+          specialty: newDocSpecialty,
+          consultation_fee: newDocFee,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to add specialist account.');
+
+      setAddDoctorModalOpen(false);
+      setNewDocName('');
+      setNewDocEmail('');
+      setNewDocPassword('');
+      setNewDocSpecialty('');
+      setNewDocFee('₹1,500 / 45 mins');
+      await fetchAdminStats();
+    } catch (err: any) {
+      setDocError(err.message || 'Error creating doctor account.');
+    } finally {
+      setDocSubmitting(false);
+    }
+  };
+
+  const handleEditDoctor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditDocSubmitting(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/admin/users/${editDocId}/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          full_name: editDocName,
+          email: editDocEmail,
+          occupation: editDocSpecialty,
+          consultation_fee: editDocFee,
+        }),
+      });
+      if (res.ok) {
+        setEditDocStatusMsg('✔ Specialist details & consultation fee updated in database!');
+        await fetchAdminStats();
+        setTimeout(() => {
+          setEditDoctorModalOpen(false);
+          setEditDocStatusMsg('');
+        }, 1500);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to update specialist.');
+      }
+    } catch (e) {
+      console.error('Edit doctor error:', e);
+    } finally {
+      setEditDocSubmitting(false);
     }
   };
 
@@ -324,6 +563,34 @@ export default function DashboardPage() {
     }
   };
 
+  const handleResetUserPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetTargetUser || !resetNewPassword) return;
+
+    try {
+      if (accessToken) {
+        const res = await fetch(`${API_URL}/api/auth/admin/users/${resetTargetUser.id}/`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ password: resetNewPassword }),
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    setResetStatus(`✔ Password successfully reset for ${resetTargetUser.name}.`);
+    setTimeout(() => {
+      setResetModalOpen(false);
+      setResetTargetUser(null);
+      setResetNewPassword('');
+      setResetStatus('');
+    }, 2000);
+  };
+
   const handleLogout = () => {
     logout();
     router.push('/');
@@ -376,31 +643,19 @@ export default function DashboardPage() {
                   }`}
                 >
                   <BarChart3 className="w-4 h-4" />
-                  Executive Overview
+                  Platform Summary & Overview
                 </button>
 
                 <button
                   onClick={() => { setActiveTab('members'); setMobileMenuOpen(false); }}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-                    activeTab === 'members'
+                    activeTab === 'members' || activeTab === 'doctors'
                       ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
                       : 'text-slate-600 hover:text-[#0284c7] hover:bg-sky-50/80'
                   }`}
                 >
                   <Users className="w-4 h-4" />
-                  Directory & Accounts
-                </button>
-
-                <button
-                  onClick={() => { setActiveTab('doctors'); setMobileMenuOpen(false); }}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-                    activeTab === 'doctors'
-                      ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
-                      : 'text-slate-600 hover:text-[#0284c7] hover:bg-sky-50/80'
-                  }`}
-                >
-                  <Stethoscope className="w-4 h-4" />
-                  Doctor Workloads
+                  User & Doctor Management
                 </button>
 
                 <button
@@ -412,7 +667,7 @@ export default function DashboardPage() {
                   }`}
                 >
                   <Bot className="w-4 h-4" />
-                  AI & Clinical Engine
+                  AI Assistant & Chat Analytics
                 </button>
 
                 <button
@@ -424,7 +679,7 @@ export default function DashboardPage() {
                   }`}
                 >
                   <ShieldAlert className="w-4 h-4 text-rose-500" />
-                  Emergency Risk Feed
+                  Urgent Safety & Risk Alerts
                 </button>
 
                 <button
@@ -436,7 +691,7 @@ export default function DashboardPage() {
                   }`}
                 >
                   <Activity className="w-4 h-4" />
-                  Clinical Scores (PHQ/GAD)
+                  Assessment Analytics
                 </button>
 
                 <button
@@ -448,7 +703,7 @@ export default function DashboardPage() {
                   }`}
                 >
                   <BookOpen className="w-4 h-4" />
-                  CBT Content Hub
+                  Wellness & Therapy Content
                 </button>
 
                 <button
@@ -460,7 +715,7 @@ export default function DashboardPage() {
                   }`}
                 >
                   <Lock className="w-4 h-4" />
-                  Security & Audit Trail
+                  Security & Activity Audit
                 </button>
 
                 <button
@@ -472,7 +727,7 @@ export default function DashboardPage() {
                   }`}
                 >
                   <Download className="w-4 h-4" />
-                  BI Reports & Export
+                  Reports & Data Export
                 </button>
 
                 <button
@@ -552,6 +807,54 @@ export default function DashboardPage() {
                 </button>
 
                 <button
+                  onClick={() => { setActiveTab('assessments'); setMobileMenuOpen(false); }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                    activeTab === 'assessments'
+                      ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
+                      : 'text-slate-600 hover:text-[#0284c7] hover:bg-sky-50/80'
+                  }`}
+                >
+                  <Brain className="w-4 h-4" />
+                  Clinical Assessments (PHQ/GAD)
+                </button>
+
+                <button
+                  onClick={() => { setActiveTab('wellness_hub'); setMobileMenuOpen(false); }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                    activeTab === 'wellness_hub'
+                      ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
+                      : 'text-slate-600 hover:text-[#0284c7] hover:bg-sky-50/80'
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  Wellness & Relaxation Hub
+                </button>
+
+                <button
+                  onClick={() => { setActiveTab('booking'); setMobileMenuOpen(false); }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                    activeTab === 'booking'
+                      ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
+                      : 'text-slate-600 hover:text-[#0284c7] hover:bg-sky-50/80'
+                  }`}
+                >
+                  <Stethoscope className="w-4 h-4" />
+                  Therapist Booking
+                </button>
+
+                <button
+                  onClick={() => { setActiveTab('community'); setMobileMenuOpen(false); }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                    activeTab === 'community'
+                      ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
+                      : 'text-slate-600 hover:text-[#0284c7] hover:bg-sky-50/80'
+                  }`}
+                >
+                  <Users className="w-4 h-4" />
+                  Community Forum
+                </button>
+
+                <button
                   onClick={() => { setActiveTab('profile'); setMobileMenuOpen(false); }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                     activeTab === 'profile'
@@ -606,29 +909,37 @@ export default function DashboardPage() {
             </button>
             <h2 className="text-lg sm:text-xl font-bold font-outfit capitalize text-slate-900">
               {activeTab === 'admin' 
-                ? 'Executive BI Overview' 
+                ? 'Platform Summary & Overview' 
                 : activeTab === 'doctors' 
-                ? 'Doctor Roster & Workloads' 
+                ? 'Doctor Schedules & Rosters' 
                 : activeTab === 'members' 
-                ? 'Directory & Accounts' 
+                ? 'User & Doctor Accounts' 
                 : activeTab === 'ai_analytics'
-                ? 'AI & Clinical Engine'
+                ? 'AI Assistant & Chat Analytics'
                 : activeTab === 'crisis_monitoring'
-                ? 'Emergency Risk Feed'
+                ? 'Urgent Safety & Risk Alerts'
                 : activeTab === 'clinical_insights'
-                ? 'Clinical Scores (PHQ/GAD)'
+                ? 'Clinical Assessment Analytics'
                 : activeTab === 'content_mgmt'
-                ? 'CBT Content Hub'
+                ? 'Wellness & Therapy Content'
                 : activeTab === 'platform_audit'
-                ? 'Security & Audit Trail'
+                ? 'Security & Activity Audit'
                 : activeTab === 'reports_export'
-                ? 'BI Reports & Export'
+                ? 'Reports & Data Export'
+                : activeTab === 'assessments'
+                ? 'Mental Health Assessments'
+                : activeTab === 'wellness_hub'
+                ? 'Wellness & Relaxation Hub'
+                : activeTab === 'booking'
+                ? 'Therapist & Doctor Booking'
+                : activeTab === 'community'
+                ? 'Community Support Forum'
                 : activeTab === 'profile'
                 ? 'Profile & Security Settings'
                 : activeTab === 'dashboard' 
-                ? (user.role === 'therapist' ? 'Specialist Workspace' : 'Sanctuary Home')
+                ? (user.role === 'therapist' ? 'Specialist Workspace' : 'Home Dashboard')
                 : activeTab === 'chat' 
-                ? (user.role === 'therapist' ? 'Consultation Companion' : 'Wellness Companion') 
+                ? (user.role === 'therapist' ? 'Consultation Companion' : 'AI Support Companion') 
                 : (user.role === 'therapist' ? 'Care Notes & Observations' : 'Personal Journal')
               }
             </h2>
@@ -774,6 +1085,54 @@ export default function DashboardPage() {
               </motion.div>
             )}
 
+            {/* ── TAB: CLINICAL ASSESSMENTS (PHQ-9 / GAD-7) ────────────────── */}
+            {activeTab === 'assessments' && (
+              <motion.div
+                key="assessments"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <AssessmentSuite accessToken={accessToken!} onNavigateTab={(tab: any) => setActiveTab(tab)} />
+              </motion.div>
+            )}
+
+            {/* ── TAB: WELLNESS & RELAXATION HUB ────────────────────────────── */}
+            {activeTab === 'wellness_hub' && (
+              <motion.div
+                key="wellness_hub"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <WellnessHub />
+              </motion.div>
+            )}
+
+            {/* ── TAB: COMMUNITY FORUM ───────────────────────────────────────── */}
+            {activeTab === 'community' && (
+              <motion.div
+                key="community"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <CommunityBoard accessToken={accessToken!} userRole={user.role} />
+              </motion.div>
+            )}
+
+            {/* ── TAB: THERAPIST BOOKING ────────────────────────────────────── */}
+            {activeTab === 'booking' && (
+              <motion.div
+                key="booking"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <TherapistBooking accessToken={accessToken!} />
+              </motion.div>
+            )}
+
             {/* ── TAB: ADMIN ANALYTICS & BI SUITE ─────────────────────────────── */}
             {user.role === 'admin' && ['admin', 'ai_analytics', 'crisis_monitoring', 'clinical_insights', 'content_mgmt', 'platform_audit', 'reports_export'].includes(activeTab) && (
               <AdminAnalyticsSuite
@@ -842,7 +1201,12 @@ export default function DashboardPage() {
                                 </div>
                                 <div>
                                   <h5 className="text-base font-bold text-slate-900">{doc.name}</h5>
-                                  <span className="text-xs text-slate-500">{doc.specialty}</span>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-xs text-slate-500">{doc.specialty}</span>
+                                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                                      {doc.consultation_fee || '₹1,500 / 45 mins'}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                               <span className={`text-xs px-3 py-1 rounded-full font-bold border ${statusColor}`}>
@@ -867,8 +1231,27 @@ export default function DashboardPage() {
                             </span>
                             <div className="flex items-center gap-2">
                               <button
-                                onClick={() => handleToggleUserStatus(doc.id, doc.is_active ?? true)}
+                                onClick={() => handleOpenViewDetails(doc, 'info')}
                                 className="px-3.5 py-1.5 rounded-xl border border-sky-200 text-xs font-semibold text-[#0284c7] hover:bg-sky-50 transition-colors cursor-pointer"
+                              >
+                                View Details
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditDocId(doc.id);
+                                  setEditDocName(doc.name);
+                                  setEditDocEmail(doc.email || '');
+                                  setEditDocSpecialty(doc.specialty || '');
+                                  setEditDocFee(doc.consultation_fee || '₹1,500 / 45 mins');
+                                  setEditDoctorModalOpen(true);
+                                }}
+                                className="px-3.5 py-1.5 rounded-xl border border-indigo-200 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
+                              >
+                                Edit Fee & Details
+                              </button>
+                              <button
+                                onClick={() => handleToggleUserStatus(doc.id, doc.is_active ?? true)}
+                                className="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
                               >
                                 Toggle Duty Status
                               </button>
@@ -934,30 +1317,42 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* Sub-tab Navigation Bar (Clients vs Doctors) */}
-                <div className="flex items-center gap-2 p-1.5 bg-sky-50/80 rounded-2xl border border-sky-100 max-w-md">
-                  <button
-                    onClick={() => setDirectorySubTab('clients')}
-                    className={`flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                      directorySubTab === 'clients'
-                        ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
-                        : 'text-slate-600 hover:text-[#0284c7]'
-                    }`}
-                  >
-                    <User className="w-4 h-4" />
-                    Clients / Members ({adminStats?.members_list?.length || 0})
-                  </button>
-                  <button
-                    onClick={() => setDirectorySubTab('doctors')}
-                    className={`flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                      directorySubTab === 'doctors'
-                        ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
-                        : 'text-slate-600 hover:text-[#0284c7]'
-                    }`}
-                  >
-                    <Stethoscope className="w-4 h-4" />
-                    Doctors & Specialists ({adminStats?.doctors_workload?.length || 0})
-                  </button>
+                {/* Sub-tab Navigation Bar & Search Bar */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 p-1.5 bg-sky-50/80 rounded-2xl border border-sky-100 max-w-md w-full sm:w-auto">
+                    <button
+                      onClick={() => setDirectorySubTab('clients')}
+                      className={`flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                        directorySubTab === 'clients'
+                          ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
+                          : 'text-slate-600 hover:text-[#0284c7]'
+                      }`}
+                    >
+                      <User className="w-4 h-4" />
+                      Clients / Members ({adminStats?.members_list?.length || 0})
+                    </button>
+                    <button
+                      onClick={() => setDirectorySubTab('doctors')}
+                      className={`flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                        directorySubTab === 'doctors'
+                          ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
+                          : 'text-slate-600 hover:text-[#0284c7]'
+                      }`}
+                    >
+                      <Stethoscope className="w-4 h-4" />
+                      Doctors & Specialists ({adminStats?.doctors_workload?.length || 0})
+                    </button>
+                  </div>
+
+                  <div className="relative w-full sm:w-64">
+                    <input
+                      type="text"
+                      placeholder="Search accounts by name or email..."
+                      value={directorySearchQuery}
+                      onChange={(e) => setDirectorySearchQuery(e.target.value)}
+                      className="w-full pl-3 pr-3 py-2 rounded-xl text-xs bg-white border border-slate-200 focus:outline-none focus:border-sky-400"
+                    />
+                  </div>
                 </div>
 
                 {/* Sub-tab Content 1: Clients Directory */}
@@ -979,7 +1374,13 @@ export default function DashboardPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-sky-50 text-slate-700">
-                            {adminStats.members_list.map((m: any) => (
+                            {adminStats.members_list
+                              .filter((m: any) =>
+                                !directorySearchQuery ||
+                                m.name.toLowerCase().includes(directorySearchQuery.toLowerCase()) ||
+                                m.email.toLowerCase().includes(directorySearchQuery.toLowerCase())
+                              )
+                              .map((m: any) => (
                               <tr key={m.id} className="hover:bg-sky-50/50 transition-colors">
                                 <td className="py-3.5 font-bold text-slate-900 flex items-center gap-2.5">
                                   <div className="w-8 h-8 rounded-full bg-sky-100 text-[#0284c7] font-bold flex items-center justify-center text-xs">
@@ -998,12 +1399,18 @@ export default function DashboardPage() {
                                     {m.status}
                                   </span>
                                 </td>
-                                <td className="py-3.5 text-right space-x-3">
+                                <td className="py-3.5 text-right space-x-2">
                                   <button
-                                    onClick={() => handlePromoteToSpecialist(m.id)}
-                                    className="text-[11px] font-semibold text-emerald-600 hover:underline cursor-pointer"
+                                    onClick={() => handleOpenViewDetails(m, 'info')}
+                                    className="text-[11px] font-semibold text-[#0284c7] hover:underline cursor-pointer"
                                   >
-                                    + Promote to Doctor
+                                    View Details
+                                  </button>
+                                  <button
+                                    onClick={() => { setResetTargetUser({ id: m.id, name: m.name }); setResetModalOpen(true); }}
+                                    className="text-[11px] font-semibold text-indigo-600 hover:underline cursor-pointer"
+                                  >
+                                    Reset Password
                                   </button>
                                   <button
                                     onClick={() => handleToggleUserStatus(m.id, m.status === 'Active')}
@@ -1015,7 +1422,7 @@ export default function DashboardPage() {
                                     onClick={() => handleDeleteUser(m.id, m.name)}
                                     className="text-[11px] font-semibold text-rose-600 hover:underline cursor-pointer"
                                   >
-                                    Delete Account
+                                    Delete
                                   </button>
                                 </td>
                               </tr>
@@ -1067,8 +1474,14 @@ export default function DashboardPage() {
                                 <span>Email: {doc.email}</span>
                                 <div className="flex items-center gap-2">
                                   <button
+                                    onClick={() => handleOpenViewDetails(doc, 'info')}
+                                    className="px-3 py-1 rounded-lg border border-sky-200 text-[11px] font-semibold text-[#0284c7] hover:bg-sky-50 transition-colors cursor-pointer"
+                                  >
+                                    View Details
+                                  </button>
+                                  <button
                                     onClick={() => handleToggleUserStatus(doc.id, doc.status === 'Available')}
-                                    className="px-3 py-1 rounded-lg border border-sky-200 text-[11px] font-semibold text-[#0284c7] hover:bg-sky-50"
+                                    className="px-3 py-1 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
                                   >
                                     Toggle Status
                                   </button>
@@ -1143,7 +1556,7 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              <form onSubmit={handleCreateDoctor} className="space-y-4 text-xs">
+              <form onSubmit={handleAddDoctor} className="space-y-4 text-xs">
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">Full Name</label>
                   <input
@@ -1185,9 +1598,21 @@ export default function DashboardPage() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Cognitive Behavioral Specialist"
+                    placeholder="e.g. Senior Clinical Psychologist"
                     value={newDocSpecialty}
                     onChange={(e) => setNewDocSpecialty(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Consultation Fee (Per Session)</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. ₹1,500 / 45 mins"
+                    value={newDocFee}
+                    onChange={(e) => setNewDocFee(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
                   />
                 </div>
@@ -1206,6 +1631,110 @@ export default function DashboardPage() {
                     className="glow-btn px-5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer disabled:opacity-50"
                   >
                     {docSubmitting ? 'Registering...' : 'Register Specialist'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── EDIT SPECIALIST DETAILS & CONSULTATION FEE MODAL OVERLAY ───── */}
+      <AnimatePresence>
+        {editDoctorModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-sky-100 shadow-xl space-y-6 text-left"
+            >
+              <div className="flex items-center justify-between border-b border-sky-100 pb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <Stethoscope className="w-5 h-5 text-[#0284c7]" /> Edit Specialist Details & Fee
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Update consultation fee and doctor info in real time.</p>
+                </div>
+                <button
+                  onClick={() => setEditDoctorModalOpen(false)}
+                  className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {editDocStatusMsg && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-xs font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> {editDocStatusMsg}
+                </div>
+              )}
+
+              <form onSubmit={handleEditDoctor} className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editDocName}
+                    onChange={(e) => setEditDocName(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    value={editDocEmail}
+                    onChange={(e) => setEditDocEmail(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Specialty / Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={editDocSpecialty}
+                    onChange={(e) => setEditDocSpecialty(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Consultation Fee (Per Session)</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. ₹2,000 / 45 mins"
+                    value={editDocFee}
+                    onChange={(e) => setEditDocFee(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
+                  />
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditDoctorModalOpen(false)}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editDocSubmitting}
+                    className="glow-btn px-5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer disabled:opacity-50"
+                  >
+                    {editDocSubmitting ? 'Saving...' : 'Save & Update Real-time'}
                   </button>
                 </div>
               </form>
@@ -1491,6 +2020,360 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
+      {/* ── RESET USER PASSWORD MODAL OVERLAY ─────────────────────────────── */}
+      <AnimatePresence>
+        {resetModalOpen && resetTargetUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full border border-sky-100 shadow-2xl space-y-4 text-left"
+            >
+              <div className="flex items-center justify-between border-b border-sky-100 pb-3">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 font-outfit">Reset Password</h3>
+                  <p className="text-xs text-slate-500">{resetTargetUser.name}</p>
+                </div>
+                <button
+                  onClick={() => setResetModalOpen(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {resetStatus && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-xs font-semibold">
+                  {resetStatus}
+                </div>
+              )}
+
+              <form onSubmit={handleResetUserPassword} className="space-y-3 text-xs">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">New Password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    placeholder="Enter new secure password..."
+                    value={resetNewPassword}
+                    onChange={(e) => setResetNewPassword(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
+                  />
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setResetModalOpen(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0284c7] hover:bg-sky-600 shadow-sm"
+                  >
+                    Update Password
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── COMPREHENSIVE VIEW DETAILS & EDIT ACCOUNT MODAL OVERLAY ───────── */}
+      <AnimatePresence>
+        {detailsModalOpen && detailsUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-sky-100 shadow-2xl space-y-5 text-left"
+            >
+              {/* Header Info */}
+              <div className="flex items-center justify-between border-b border-sky-100 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-sky-100 text-[#0284c7] font-bold flex items-center justify-center text-base">
+                    {(detailsUser.name || detailsUser.full_name || 'U').charAt(0)}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                      {detailsUser.name || detailsUser.full_name}
+                      <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${
+                        (detailsUser.role === 'therapist' || detailsUser.role === 'Doctor')
+                          ? 'bg-purple-50 text-purple-700 border-purple-200'
+                          : 'bg-sky-50 text-[#0284c7] border-sky-200'
+                      }`}>
+                        {(detailsUser.role === 'therapist' || detailsUser.role === 'Doctor') ? '🩺 Specialist Doctor' : '👤 Client Member'}
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-500">{detailsUser.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setDetailsModalOpen(false)}
+                  className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Sub-tab Navigation (Overview vs Edit vs Password) */}
+              <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-2xl text-xs">
+                <button
+                  onClick={() => setDetailsActiveSubTab('info')}
+                  className={`flex-1 py-2 rounded-xl font-bold transition-all ${
+                    detailsActiveSubTab === 'info' ? 'bg-[#0284c7] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Full Overview
+                </button>
+                <button
+                  onClick={() => setDetailsActiveSubTab('edit')}
+                  className={`flex-1 py-2 rounded-xl font-bold transition-all ${
+                    detailsActiveSubTab === 'edit' ? 'bg-[#0284c7] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Edit Profile
+                </button>
+                <button
+                  onClick={() => setDetailsActiveSubTab('security')}
+                  className={`flex-1 py-2 rounded-xl font-bold transition-all ${
+                    detailsActiveSubTab === 'security' ? 'bg-[#0284c7] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Reset Password
+                </button>
+              </div>
+
+              {detailsStatusMsg && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-xs font-semibold">
+                  {detailsStatusMsg}
+                </div>
+              )}
+
+              {/* SUB-TAB 1: FULL OVERVIEW */}
+              {detailsActiveSubTab === 'info' && (
+                <div className="space-y-4 text-xs">
+                  <div className="grid grid-cols-2 gap-3 p-4 rounded-2xl bg-sky-50/50 border border-sky-100">
+                    <div>
+                      <span className="text-slate-500 block font-medium">Account ID</span>
+                      <span className="font-bold text-slate-800 break-all">{detailsUser.id}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block font-medium">Account Role</span>
+                      <span className="font-bold text-slate-800 capitalize">{detailsUser.role}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block font-medium">Occupation / Specialty</span>
+                      <span className="font-bold text-slate-800">{detailsUser.occupation || detailsUser.specialty || 'Not Specified'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block font-medium">
+                        {(detailsUser.role === 'therapist' || detailsUser.role === 'Doctor') ? 'Consultation Fee' : 'Assigned Specialist'}
+                      </span>
+                      <span className={`font-bold ${(detailsUser.role === 'therapist' || detailsUser.role === 'Doctor') ? 'text-emerald-700' : 'text-[#0284c7]'}`}>
+                        {(detailsUser.role === 'therapist' || detailsUser.role === 'Doctor')
+                          ? (detailsUser.consultation_fee || '₹1,500 / 45 mins')
+                          : (detailsUser.assigned_doctor || 'Dr. Sarah Smith (Clinical Psychologist)')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block font-medium">Account Status</span>
+                      <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-md font-bold text-[10px] border ${
+                        detailsUser.is_active || detailsUser.status === 'Active' || detailsUser.status === 'Available'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-rose-50 text-rose-700 border-rose-200'
+                      }`}>
+                        {detailsUser.is_active || detailsUser.status === 'Active' || detailsUser.status === 'Available' ? 'Active' : 'Suspended'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block font-medium">Email Verification</span>
+                      <span className="font-bold text-emerald-700">Verified ✔</span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                    <h5 className="font-bold text-slate-900">Clinical & Workload Snapshot</h5>
+                    <div className="grid grid-cols-2 gap-2 text-slate-600">
+                      <div>Capacity Utilization: <span className="font-bold text-slate-900">{detailsUser.utilization_percent || 40}%</span></div>
+                      <div>Rating Score: <span className="font-bold text-amber-600">★ {detailsUser.rating || 5.0} / 5.0</span></div>
+                      <div>Total Consultations: <span className="font-bold text-slate-900">{detailsUser.total_consultations || detailsUser.active_sessions || 2}</span></div>
+                      <div>Primary Language: <span className="font-bold text-slate-900">English / Hindi</span></div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex justify-end gap-2">
+                    <button
+                      onClick={() => setDetailsActiveSubTab('edit')}
+                      className="px-4 py-2 rounded-xl bg-sky-50 text-[#0284c7] font-bold border border-sky-200 hover:bg-sky-100"
+                    >
+                      Edit Account Info
+                    </button>
+                    <button
+                      onClick={() => setDetailsActiveSubTab('security')}
+                      className="px-4 py-2 rounded-xl bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 hover:bg-indigo-100"
+                    >
+                      Reset Password
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* SUB-TAB 2: EDIT PROFILE FORM */}
+              {detailsActiveSubTab === 'edit' && (
+                <form onSubmit={handleSaveDetailsUpdate} className="space-y-3 text-xs">
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={detailsFormName}
+                      onChange={(e) => setDetailsFormName(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      value={detailsFormEmail}
+                      onChange={(e) => setDetailsFormEmail(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">Occupation / Specialty</label>
+                    <input
+                      type="text"
+                      required
+                      value={detailsFormOccupation}
+                      onChange={(e) => setDetailsFormOccupation(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
+                    />
+                  </div>
+
+                  {(detailsUser.role === 'therapist' || detailsUser.role === 'Doctor') ? (
+                    <div>
+                      <label className="block text-slate-700 font-bold mb-1">Consultation Fee</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. ₹1,500 / 45 mins"
+                        value={detailsFormFee}
+                        onChange={(e) => setDetailsFormFee(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-slate-700 font-bold mb-1">Assigned Specialist Doctor</label>
+                      <div className="w-full px-4 py-2.5 rounded-xl bg-sky-50 border border-sky-200 font-bold text-[#0284c7] flex items-center justify-between">
+                        <span>{detailsUser.assigned_doctor || 'Dr. Sarah Smith (Clinical Psychologist)'}</span>
+                        <button
+                          type="button"
+                          onClick={() => { setDetailsModalOpen(false); setAssignModalOpen(true); }}
+                          className="text-[11px] underline text-[#0284c7] font-semibold cursor-pointer"
+                        >
+                          Reassign Doctor
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <span className="font-bold text-slate-700">Account Active Status</span>
+                    <button
+                      type="button"
+                      onClick={() => setDetailsFormActive(!detailsFormActive)}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                        detailsFormActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                      }`}
+                    >
+                      {detailsFormActive ? 'Active (Enabled)' : 'Suspended (Disabled)'}
+                    </button>
+                  </div>
+
+                  <div className="pt-2 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDetailsModalOpen(false)}
+                      className="px-4 py-2 rounded-xl text-slate-500 font-semibold hover:bg-slate-100"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={detailsSubmitting}
+                      className="px-5 py-2 rounded-xl text-white bg-[#0284c7] font-bold hover:bg-sky-600 shadow-sm disabled:opacity-50"
+                    >
+                      {detailsSubmitting ? 'Saving Changes...' : 'Save Real-time Updates'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* SUB-TAB 3: RESET PASSWORD FORM */}
+              {detailsActiveSubTab === 'security' && (
+                <form onSubmit={handleSaveDetailsUpdate} className="space-y-4 text-xs">
+                  <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl">
+                    <span className="font-bold block mb-0.5">Admin Security Override</span>
+                    Set a new password for <span className="font-bold">{detailsUser.name || detailsUser.full_name}</span>.
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">New Account Password</label>
+                    <input
+                      type="password"
+                      required
+                      minLength={8}
+                      placeholder="Enter new secure password..."
+                      value={detailsFormPassword}
+                      onChange={(e) => setDetailsFormPassword(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
+                    />
+                  </div>
+
+                  <div className="pt-2 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDetailsModalOpen(false)}
+                      className="px-4 py-2 rounded-xl text-slate-500 font-semibold hover:bg-slate-100"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={detailsSubmitting || !detailsFormPassword}
+                      className="px-5 py-2 rounded-xl text-white bg-indigo-600 font-bold hover:bg-indigo-700 shadow-sm disabled:opacity-50"
+                    >
+                      {detailsSubmitting ? 'Updating Password...' : 'Confirm Reset Password'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

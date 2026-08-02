@@ -26,6 +26,13 @@ from .views import (
     AdminAssignPatientView,
     TherapistPatientsView,
     TherapistScheduleView,
+    PublicDoctorListView,
+    AssessmentSubmissionView,
+    TreatmentPlanView,
+    CommunityPostView,
+    CommunityCommentView,
+    PlatformNotificationView,
+    WellnessResourceView,
 )
 
 app_name = 'users'
@@ -60,8 +67,21 @@ urlpatterns = [
     path('google/', GoogleOAuthView.as_view(), name='google-oauth'),
 
     # ── Specialist / Therapist Portal ───────────────────────────────────────
+    path('doctors/public/', PublicDoctorListView.as_view(), name='doctors-public'),
     path('therapist/patients/', TherapistPatientsView.as_view(), name='therapist-patients'),
     path('therapist/schedule/', TherapistScheduleView.as_view(), name='therapist-schedule'),
+    path('treatment-plans/', TreatmentPlanView.as_view(), name='treatment-plans'),
+
+    # ── Clinical Assessments ─────────────────────────────────────────────────
+    path('assessments/', AssessmentSubmissionView.as_view(), name='assessments'),
+
+    # ── Community Forum ──────────────────────────────────────────────────────
+    path('community/posts/', CommunityPostView.as_view(), name='community-posts'),
+    path('community/comments/', CommunityCommentView.as_view(), name='community-comments'),
+
+    # ── Notifications & Resources ────────────────────────────────────────────
+    path('notifications/', PlatformNotificationView.as_view(), name='notifications'),
+    path('resources/', WellnessResourceView.as_view(), name='resources'),
 
     # ── Admin Panel ──────────────────────────────────────────────────────────
     path('admin/dashboard/', AdminDashboardView.as_view(), name='admin-dashboard'),
@@ -71,3 +91,4 @@ urlpatterns = [
     path('admin/users/<uuid:user_id>/', AdminUserUpdateView.as_view(), name='admin-user-update'),
     path('admin/assign-patient/', AdminAssignPatientView.as_view(), name='admin-assign-patient'),
 ]
+

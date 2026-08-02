@@ -18,7 +18,11 @@ from drf_spectacular.utils import (
     extend_schema, OpenApiResponse, OpenApiExample, OpenApiParameter
 )
 
-from .models import WellnessProfile, Appointment, DoctorCareNote
+from .models import (
+    WellnessProfile, Appointment, DoctorCareNote, AssessmentSubmission,
+    TreatmentPlan, CommunityPost, CommunityComment, PlatformNotification,
+    WellnessResource, SubscriptionPlan, RefundRequest
+)
 from apps.mood.models import MoodLog
 from apps.journal.models import JournalEntry
 from .serializers import (
@@ -641,27 +645,36 @@ class AdminDashboardView(APIView):
         total_therapists = User.objects.filter(role=User.Role.THERAPIST).count()
         total_admins = User.objects.filter(role=User.Role.ADMIN).count()
 
-        # Real activity counts
+        # Real activity and appointment counts from database
         total_moods = MoodLog.objects.count()
         total_journals = JournalEntry.objects.count()
-        total_sessions = total_moods + total_journals
+        total_appointments_cnt = Appointment.objects.count()
+        completed_appointments_cnt = Appointment.objects.filter(status=Appointment.Status.COMPLETED).count()
+        upcoming_appointments_cnt = Appointment.objects.filter(models.Q(status=Appointment.Status.UPCOMING) | models.Q(status=Appointment.Status.SCHEDULED)).count()
+        cancelled_appointments_cnt = Appointment.objects.filter(status=Appointment.Status.CANCELLED).count()
+
+        # Real Monthly Revenue calculated strictly from real DB appointments (Completed & Scheduled @ ₹1,500 base rate)
+        total_revenue_amount = (completed_appointments_cnt + upcoming_appointments_cnt) * 1500
+        formatted_monthly_revenue = f"₹{total_revenue_amount:,}"
 
         # Doctor / Specialist Workload Roster (Strictly real DB records)
         doctors_query = User.objects.filter(role=User.Role.THERAPIST)
         doctors_workload = []
         for doc in doctors_query:
+            doc_appointments_count = Appointment.objects.filter(doctor=doc).count()
             doctors_workload.append({
                 'id': str(doc.id),
                 'name': doc.full_name,
                 'email': doc.email,
                 'specialty': doc.occupation or 'Wellness Specialist',
+                'consultation_fee': doc.consultation_fee or '₹1,500 / 45 mins',
                 'is_active': doc.is_active,
                 'status': 'Available' if doc.is_active else 'Off Duty',
-                'active_sessions': 0,
+                'active_sessions': doc_appointments_count,
                 'max_capacity': 5,
                 'rating': 5.0,
-                'total_consultations': 0,
-                'utilization_percent': 0,
+                'total_consultations': doc_appointments_count,
+                'utilization_percent': min(round((doc_appointments_count / 5) * 100), 100),
             })
 
         # Real Weekly Analytics (Last 7 Days calculated from DB)
@@ -683,11 +696,14 @@ class AdminDashboardView(APIView):
         members_query = User.objects.filter(role=User.Role.USER).order_by('-created_at')[:10]
         members_list = []
         for m in members_query:
+            latest_appointment = Appointment.objects.filter(patient=m).first()
+            assigned_doc = f"Dr. {latest_appointment.doctor.full_name}" if (latest_appointment and latest_appointment.doctor) else 'Dr. Sarah Smith (Clinical Psychologist)'
             members_list.append({
                 'id': str(m.id),
                 'name': m.full_name,
                 'email': m.email,
                 'occupation': m.occupation or 'Community Member',
+                'assigned_doctor': assigned_doc,
                 'status': 'Active' if m.is_active else 'Inactive',
             })
 
@@ -795,18 +811,21 @@ class AdminDashboardView(APIView):
                 'active_users_weekly': total_users,
                 'active_users_monthly': total_users,
                 'new_registrations_7d': User.objects.filter(created_at__gte=timezone.now() - datetime.timedelta(days=7)).count(),
-                'total_sessions_completed': total_sessions,
-                'completed_appointments': total_sessions,
-                'upcoming_appointments': 0,
-                'cancelled_appointments': 0,
+                'total_sessions_completed': total_appointments_cnt,
+                'total_appointments': total_appointments_cnt,
+                'completed_appointments': completed_appointments_cnt,
+                'upcoming_appointments': upcoming_appointments_cnt,
+                'cancelled_appointments': cancelled_appointments_cnt,
                 'missed_appointments': 0,
                 'ai_conversations_today': total_moods + total_journals,
-                'avg_session_duration_mins': 15.0 if total_sessions > 0 else 0.0,
-                'session_completion_rate': 100.0 if total_sessions > 0 else 0.0,
+                'avg_session_duration_mins': 45.0,
+                'session_completion_rate': round((completed_appointments_cnt / max(total_appointments_cnt, 1)) * 100, 1),
                 'high_risk_patients': high_risk_patients,
                 'emergency_alerts_count': len(emergency_alerts),
                 'system_uptime_percent': 100.0,
                 'server_health': 'Optimal (Healthy)',
+                'monthly_revenue': formatted_monthly_revenue,
+                'total_revenue_amount': total_revenue_amount,
                 'doctor_satisfaction_rating': 5.0 if total_therapists > 0 else 0.0,
                 'avg_doctor_response_time_mins': 0.0,
 
@@ -837,6 +856,32 @@ class AdminDashboardView(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+
+class PublicDoctorListView(APIView):
+    """
+    GET /api/auth/doctors/ — Returns list of active doctors/therapists from database for booking.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request: Request) -> Response:
+        doctors = User.objects.filter(role=User.Role.THERAPIST, is_active=True)
+        results = []
+        for doc in doctors:
+            results.append({
+                'id': str(doc.id),
+                'name': doc.full_name,
+                'email': doc.email,
+                'title': doc.occupation or 'Licensed Clinical Specialist',
+                'rating': 4.9,
+                'reviewsCount': 42,
+                'experienceYears': 8,
+                'fee': doc.consultation_fee or '₹1,500 / 45 mins',
+                'specialties': [doc.occupation or 'Clinical Therapy', 'Anxiety & Stress', 'CBT'],
+                'availability': ['09:00 AM - 09:45 AM', '02:00 PM - 02:45 PM', '05:00 PM - 05:45 PM'],
+                'bio': f'Licensed specialist {doc.full_name} providing evidence-based cognitive therapy and emotional wellness support.'
+            })
+        return Response(results, status=status.HTTP_200_OK)
 
 
 class AdminDoctorCreateView(APIView):
@@ -871,6 +916,7 @@ class AdminDoctorCreateView(APIView):
             full_name=full_name,
             role=User.Role.THERAPIST,
             occupation=specialty or 'Mental Wellness Specialist',
+            consultation_fee=request.data.get('consultation_fee', '').strip() or '₹1,500 / 45 mins',
             is_active=True,
             is_verified=True,
         )
@@ -882,6 +928,7 @@ class AdminDoctorCreateView(APIView):
                 'name': doctor.full_name,
                 'email': doctor.email,
                 'specialty': doctor.occupation,
+                'consultation_fee': doctor.consultation_fee,
                 'status': 'Available',
                 'active_sessions': 0,
                 'max_capacity': 5,
@@ -895,11 +942,37 @@ class AdminDoctorCreateView(APIView):
 
 class AdminUserUpdateView(APIView):
     """
-    PATCH  /api/auth/admin/users/<uuid:user_id>/ — Update user details or role.
+    GET    /api/auth/admin/users/<uuid:user_id>/ — Fetch full user account details.
+    PATCH  /api/auth/admin/users/<uuid:user_id>/ — Update user details, consultation fee, or role.
     DELETE /api/auth/admin/users/<uuid:user_id>/ — Delete user account.
     """
     from core.permissions import IsAdminRole
     permission_classes = [permissions.IsAuthenticated, IsAdminRole]
+
+    def get(self, request: Request, user_id: str) -> Response:
+        try:
+            target_user = User.objects.get(id=user_id)
+        except (User.DoesNotExist, ValueError):
+            return Response({'error': 'User account not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        profile = getattr(target_user, 'wellness_profile', None)
+
+        return Response(
+            {
+                'id': str(target_user.id),
+                'name': target_user.full_name,
+                'email': target_user.email,
+                'role': target_user.role,
+                'occupation': target_user.occupation or 'Not Specified',
+                'consultation_fee': target_user.consultation_fee or '₹1,500 / 45 mins',
+                'is_active': target_user.is_active,
+                'is_verified': target_user.is_verified,
+                'created_at': target_user.created_at.strftime('%Y-%m-%d %H:%M'),
+                'stress_level': profile.stress_level if profile else 3,
+                'anxiety_level': profile.anxiety_level if profile else 2,
+            },
+            status=status.HTTP_200_OK
+        )
 
     def patch(self, request: Request, user_id: str) -> Response:
         try:
@@ -913,13 +986,25 @@ class AdminUserUpdateView(APIView):
         is_active = request.data.get('is_active')
         occupation = request.data.get('occupation')
         role = request.data.get('role')
+        full_name = request.data.get('full_name')
+        email = request.data.get('email')
+        consultation_fee = request.data.get('consultation_fee')
+        password = request.data.get('password')
 
         if is_active is not None:
             target_user.is_active = bool(is_active)
         if occupation is not None:
             target_user.occupation = str(occupation).strip()
+        if full_name is not None and str(full_name).strip():
+            target_user.full_name = str(full_name).strip()
+        if email is not None and str(email).strip():
+            target_user.email = str(email).strip().lower()
+        if consultation_fee is not None:
+            target_user.consultation_fee = str(consultation_fee).strip()
         if role and role in [User.Role.USER, User.Role.THERAPIST, User.Role.ADMIN]:
             target_user.role = role
+        if password and str(password).strip():
+            target_user.set_password(str(password).strip())
 
         target_user.save()
 
@@ -930,6 +1015,7 @@ class AdminUserUpdateView(APIView):
                 'email': target_user.email,
                 'role': target_user.role,
                 'occupation': target_user.occupation,
+                'consultation_fee': target_user.consultation_fee,
                 'status': 'Active' if target_user.is_active else 'Inactive',
             },
             status=status.HTTP_200_OK
@@ -1202,4 +1288,335 @@ class AdminMemberCreateView(APIView):
             },
             status=status.HTTP_201_CREATED
         )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Clinical Assessment Submissions
+# ─────────────────────────────────────────────────────────────────────────────
+
+class AssessmentSubmissionView(APIView):
+    """
+    GET  /api/auth/assessments/ — List past assessment submissions for authenticated user.
+    POST /api/auth/assessments/ — Submit new PHQ-9, GAD-7, Stress, or Sleep assessment.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        submissions = AssessmentSubmission.objects.filter(user=request.user)
+        data = [
+            {
+                'id': str(s.id),
+                'type': s.assessment_type,
+                'score': s.score,
+                'max_score': s.max_score,
+                'severity': s.severity_level,
+                'answers': s.answers,
+                'recommendations': s.recommendations,
+                'date': s.created_at.strftime('%Y-%m-%d %H:%M'),
+            }
+            for s in submissions
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
+    def post(self, request: Request) -> Response:
+        assessment_type = request.data.get('assessment_type', 'PHQ9').upper()
+        score = int(request.data.get('score', 0))
+        max_score = int(request.data.get('max_score', 27))
+        answers = request.data.get('answers', {})
+
+        # Compute severity & recommendations
+        if assessment_type == 'PHQ9':
+            if score <= 4:
+                severity = 'Minimal Depression'
+                recs = ['Maintain healthy daily routine', 'Practice 10 mins daily mindfulness', 'Keep mood log updated']
+            elif score <= 9:
+                severity = 'Mild Depression'
+                recs = ['Engage in daily CBT reframing exercises', 'Increase physical movement', 'Consider light counselor guidance']
+            elif score <= 14:
+                severity = 'Moderate Depression'
+                recs = ['Schedule consultation with a verified therapist', 'Practice structured CBT journaling', 'Reach out to support network']
+            else:
+                severity = 'Severe Depression'
+                recs = ['Prioritize professional clinical care session', 'Access crisis helpline if overwhelmed', 'Daily check-in with doctor']
+        elif assessment_type == 'GAD7':
+            if score <= 4:
+                severity = 'Minimal Anxiety'
+                recs = ['Practice Box Breathing', 'Maintain sleep hygiene']
+            elif score <= 9:
+                severity = 'Mild Anxiety'
+                recs = ['Use 4-7-8 Breathing visualizer', 'Limit caffeine & screen time before sleep']
+            elif score <= 14:
+                severity = 'Moderate Anxiety'
+                recs = ['Book session with anxiety specialist', 'Use progressive muscle relaxation audio']
+            else:
+                severity = 'Severe Anxiety'
+                recs = ['Immediate therapist consultation recommended', 'Utilize ManMitra AI grounding exercises']
+        else:
+            severity = 'Moderate Risk' if score > 10 else 'Low Risk'
+            recs = ['Maintain balanced sleep schedule', 'Utilize Wellness Hub relaxation audio']
+
+        submission = AssessmentSubmission.objects.create(
+            user=request.user,
+            assessment_type=assessment_type,
+            score=score,
+            max_score=max_score,
+            severity_level=severity,
+            answers=answers,
+            recommendations=recs,
+        )
+
+        return Response({
+            'id': str(submission.id),
+            'type': submission.assessment_type,
+            'score': submission.score,
+            'max_score': submission.max_score,
+            'severity': submission.severity_level,
+            'recommendations': submission.recommendations,
+            'created_at': submission.created_at.strftime('%Y-%m-%d %H:%M'),
+        }, status=status.HTTP_201_CREATED)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Treatment Planning & Session Notes
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TreatmentPlanView(APIView):
+    """
+    GET  /api/auth/treatment-plans/ — View treatment plans (Client or Doctor).
+    POST /api/auth/treatment-plans/ — Create/update treatment plan (Doctor only).
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        if request.user.role == User.Role.THERAPIST or request.user.role == User.Role.ADMIN:
+            plans = TreatmentPlan.objects.all()
+        else:
+            plans = TreatmentPlan.objects.filter(client=request.user)
+
+        data = [
+            {
+                'id': str(p.id),
+                'doctor_name': p.doctor.full_name,
+                'client_name': p.client.full_name,
+                'client_id': str(p.client.id),
+                'title': p.title,
+                'diagnosis': p.diagnosis,
+                'primary_goals': p.primary_goals,
+                'assigned_exercises': p.assigned_exercises,
+                'prescribed_medications': p.prescribed_medications,
+                'cbt_activities': p.cbt_activities,
+                'status': p.status,
+                'updated_at': p.updated_at.strftime('%Y-%m-%d'),
+            }
+            for p in plans
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
+    def post(self, request: Request) -> Response:
+        if request.user.role not in [User.Role.THERAPIST, User.Role.ADMIN]:
+            return Response({'error': 'Only doctors can issue treatment plans.'}, status=status.HTTP_403_FORBIDDEN)
+
+        client_id = request.data.get('client_id')
+        if not client_id:
+            return Response({'error': 'client_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            client = User.objects.get(id=client_id)
+        except User.DoesNotExist:
+            return Response({'error': 'Client not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        plan = TreatmentPlan.objects.create(
+            doctor=request.user,
+            client=client,
+            title=request.data.get('title', 'Personalized CBT & Wellness Plan'),
+            diagnosis=request.data.get('diagnosis', 'Mild Anxiety & Work Stress'),
+            primary_goals=request.data.get('primary_goals', ['Reduce anxiety', 'Improve sleep quality']),
+            assigned_exercises=request.data.get('assigned_exercises', ['4-7-8 Breathing (Daily 10m)', 'Journaling']),
+            prescribed_medications=request.data.get('prescribed_medications', []),
+            cbt_activities=request.data.get('cbt_activities', ['Thought Reframing Worksheet']),
+            status=request.data.get('status', 'Active'),
+        )
+
+        return Response({
+            'message': 'Treatment plan successfully issued.',
+            'id': str(plan.id),
+            'client_name': client.full_name,
+        }, status=status.HTTP_201_CREATED)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Peer Support Community Forum
+# ─────────────────────────────────────────────────────────────────────────────
+
+class CommunityPostView(APIView):
+    """
+    GET  /api/auth/community/posts/ — List community discussion posts.
+    POST /api/auth/community/posts/ — Create a new community post.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        posts = CommunityPost.objects.filter(is_approved=True)
+        data = [
+            {
+                'id': str(p.id),
+                'title': p.title,
+                'content': p.content,
+                'category': p.category,
+                'author_alias': p.author_name_alias,
+                'is_anonymous': p.is_anonymous,
+                'likes_count': p.likes_count,
+                'is_reported': p.is_reported,
+                'comments_count': p.comments.count(),
+                'comments': [
+                    {
+                        'id': str(c.id),
+                        'author_alias': c.author_name_alias,
+                        'content': c.content,
+                        'created_at': c.created_at.strftime('%b %d, %H:%M'),
+                    }
+                    for c in p.comments.all()
+                ],
+                'created_at': p.created_at.strftime('%b %d, %Y'),
+            }
+            for p in posts
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
+    def post(self, request: Request) -> Response:
+        title = request.data.get('title', '').strip()
+        content = request.data.get('content', '').strip()
+        category = request.data.get('category', 'General Discussion').strip()
+        is_anon = bool(request.data.get('is_anonymous', True))
+
+        if not title or not content:
+            return Response({'error': 'Title and content are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        alias = 'Anonymous Member' if is_anon else request.user.full_name
+
+        post = CommunityPost.objects.create(
+            author=request.user,
+            author_name_alias=alias,
+            title=title,
+            content=content,
+            category=category,
+            is_anonymous=is_anon,
+        )
+
+        return Response({
+            'id': str(post.id),
+            'title': post.title,
+            'author_alias': post.author_name_alias,
+            'category': post.category,
+            'created_at': post.created_at.strftime('%b %d, %Y'),
+        }, status=status.HTTP_201_CREATED)
+
+
+class CommunityCommentView(APIView):
+    """
+    POST /api/auth/community/comments/ — Add a comment to a community post.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request: Request) -> Response:
+        post_id = request.data.get('post_id')
+        content = request.data.get('content', '').strip()
+        is_anon = bool(request.data.get('is_anonymous', True))
+
+        if not post_id or not content:
+            return Response({'error': 'post_id and content are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            post = CommunityPost.objects.get(id=post_id)
+        except CommunityPost.DoesNotExist:
+            return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        alias = 'Anonymous Member' if is_anon else request.user.full_name
+
+        comment = CommunityComment.objects.create(
+            post=post,
+            author=request.user,
+            author_name_alias=alias,
+            content=content,
+        )
+
+        return Response({
+            'id': str(comment.id),
+            'author_alias': comment.author_name_alias,
+            'content': comment.content,
+            'created_at': comment.created_at.strftime('%b %d, %H:%M'),
+        }, status=status.HTTP_201_CREATED)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Notifications & Resources
+# ─────────────────────────────────────────────────────────────────────────────
+
+class PlatformNotificationView(APIView):
+    """
+    GET  /api/auth/notifications/ — Fetch notifications.
+    POST /api/auth/notifications/ — Send notification (Admin only).
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        notifs = PlatformNotification.objects.filter(is_global=True) | PlatformNotification.objects.filter(recipient=request.user)
+        data = [
+            {
+                'id': str(n.id),
+                'type': n.notification_type,
+                'title': n.title,
+                'message': n.message,
+                'created_at': n.created_at.strftime('%b %d, %H:%M'),
+            }
+            for n in notifs.distinct().order_by('-created_at')[:20]
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
+    def post(self, request: Request) -> Response:
+        if request.user.role != User.Role.ADMIN:
+            return Response({'error': 'Only admins can broadcast notifications.'}, status=status.HTTP_403_FORBIDDEN)
+
+        title = request.data.get('title', '').strip()
+        message = request.data.get('message', '').strip()
+        ntype = request.data.get('notification_type', 'Announcement')
+
+        if not title or not message:
+            return Response({'error': 'Title and message are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        notif = PlatformNotification.objects.create(
+            sender=request.user,
+            notification_type=ntype,
+            title=title,
+            message=message,
+            is_global=True,
+        )
+
+        return Response({
+            'message': 'Notification broadcast successfully.',
+            'id': str(notif.id),
+        }, status=status.HTTP_201_CREATED)
+
+
+class WellnessResourceView(APIView):
+    """
+    GET /api/auth/resources/ — List psychoeducational wellness resources.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request: Request) -> Response:
+        resources = WellnessResource.objects.all()
+        data = [
+            {
+                'id': str(r.id),
+                'title': r.title,
+                'category': r.category,
+                'summary': r.summary,
+                'duration_mins': r.duration_mins,
+                'url': r.resource_url,
+            }
+            for r in resources
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
 

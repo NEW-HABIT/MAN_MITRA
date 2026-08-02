@@ -46,6 +46,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=''
     )
     occupation = models.CharField(max_length=255, blank=True, default='')
+    consultation_fee = models.CharField(max_length=100, blank=True, default='₹1,500 / 45 mins')
 
     # ── Platform Role ─────────────────────────────────────
     role = models.CharField(
@@ -203,3 +204,173 @@ class DoctorCareNote(models.Model):
 
     def __str__(self) -> str:
         return f'Note for {self.client.full_name} by {self.doctor.full_name}'
+
+
+class AssessmentSubmission(models.Model):
+    """
+    Standardized PHQ-9, GAD-7, Stress, and Sleep clinical assessment submissions.
+    """
+    class Type(models.TextChoices):
+        PHQ9 = 'PHQ9', 'PHQ-9 Depression'
+        GAD7 = 'GAD7', 'GAD-7 Anxiety'
+        STRESS = 'STRESS', 'Stress Assessment'
+        SLEEP = 'SLEEP', 'Sleep Assessment'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assessment_submissions')
+    assessment_type = models.CharField(max_length=20, choices=Type.choices)
+    score = models.IntegerField()
+    max_score = models.IntegerField(default=27)
+    severity_level = models.CharField(max_length=50) # e.g. 'Minimal', 'Mild', 'Moderate', 'Severe'
+    answers = models.JSONField(default=dict)
+    recommendations = models.JSONField(default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:
+        return f'{self.user.full_name} - {self.assessment_type} ({self.score})'
+
+
+class TreatmentPlan(models.Model):
+    """
+    Clinical treatment plan created by Doctor for a Client.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_treatment_plans')
+    client = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_treatment_plans')
+    title = models.CharField(max_length=255, default='Personalized CBT & Mindfulness Plan')
+    diagnosis = models.CharField(max_length=255, blank=True, default='')
+    primary_goals = models.JSONField(default=list)
+    assigned_exercises = models.JSONField(default=list)
+    prescribed_medications = models.JSONField(default=list)
+    cbt_activities = models.JSONField(default=list)
+    status = models.CharField(max_length=20, default='Active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    def __str__(self) -> str:
+        return f'Treatment Plan for {self.client.full_name} by {self.doctor.full_name}'
+
+
+class CommunityPost(models.Model):
+    """
+    Peer support community discussion post.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='community_posts')
+    author_name_alias = models.CharField(max_length=100, default='Anonymous Peer')
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    category = models.CharField(max_length=100, default='General Discussion')
+    is_anonymous = models.BooleanField(default=True)
+    is_approved = models.BooleanField(default=True)
+    is_reported = models.BooleanField(default=False)
+    likes_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:
+        return f'Post "{self.title}" by {self.author_name_alias}'
+
+
+class CommunityComment(models.Model):
+    """
+    Comment on a peer support community post.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    post = models.ForeignKey(CommunityPost, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='community_comments')
+    author_name_alias = models.CharField(max_length=100, default='Anonymous Peer')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+
+class PlatformNotification(models.Model):
+    """
+    Platform-wide broadcast and user-specific notifications.
+    """
+    class Type(models.TextChoices):
+        ANNOUNCEMENT = 'Announcement', 'Platform Announcement'
+        REMINDER = 'Reminder', 'Health Reminder'
+        PROMO = 'Promotional', 'Promotional Message'
+        MAINTENANCE = 'Maintenance', 'Maintenance Notification'
+        EMERGENCY = 'Emergency', 'Emergency Alert'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='sent_notifications')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='received_notifications')
+    notification_type = models.CharField(max_length=30, choices=Type.choices, default=Type.ANNOUNCEMENT)
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    is_global = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class WellnessResource(models.Model):
+    """
+    Psychoeducational resource content (articles, meditations, exercises, videos, FAQs).
+    """
+    class Category(models.TextChoices):
+        ARTICLE = 'Article', 'Article'
+        MEDITATION = 'Meditation', 'Guided Meditation'
+        EXERCISE = 'Exercise', 'CBT Exercise'
+        VIDEO = 'Video', 'Wellness Video'
+        SLEEP = 'Sleep', 'Sleep Audio'
+        FAQ = 'FAQ', 'Frequently Asked Question'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=255)
+    category = models.CharField(max_length=30, choices=Category.choices, default=Category.ARTICLE)
+    summary = models.TextField()
+    content_body = models.TextField(blank=True, default='')
+    duration_mins = models.PositiveIntegerField(default=10)
+    resource_url = models.URLField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class SubscriptionPlan(models.Model):
+    """
+    Platform subscription tiers.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100) # e.g. 'Free Care', 'Plus Support', 'Premium Clinical'
+    price_monthly = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    features = models.JSONField(default=list)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self) -> str:
+        return f'{self.name} - ₹{self.price_monthly}/mo'
+
+
+class RefundRequest(models.Model):
+    """
+    Refund requests submitted by clients or processed by admins.
+    """
+    class Status(models.TextChoices):
+        PENDING = 'Pending', 'Pending Review'
+        APPROVED = 'Approved', 'Approved & Refunded'
+        REJECTED = 'Rejected', 'Rejected'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='refund_requests')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    reason = models.TextField()
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+

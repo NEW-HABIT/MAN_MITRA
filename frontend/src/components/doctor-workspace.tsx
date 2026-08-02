@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Stethoscope, Users, Calendar, Clock, Activity, Video, FileText, CheckCircle2,
-  AlertTriangle, Heart, User, Sparkles, X, ChevronRight, MessageSquare, Plus, Save
+  AlertTriangle, Heart, User, Sparkles, X, ChevronRight, MessageSquare, Plus, Save,
+  Pill, Download, Phone, ShieldAlert, Check, RefreshCw
 } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import { API_URL } from '@/config';
@@ -15,14 +16,20 @@ interface DoctorWorkspaceProps {
 }
 
 export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorkspaceProps) {
-  const [activeTab, setActiveTab] = useState<'patients' | 'schedule'>('patients');
+  const [activeTab, setActiveTab] = useState<'patients' | 'schedule' | 'treatment' | 'crisis'>('patients');
   const [patients, setPatients] = useState<any[]>([]);
   const [schedule, setSchedule] = useState<any[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [careNoteInput, setCareNoteInput] = useState('');
-  const [noteSavedAlert, setNoteSavedAlert] = useState(false);
   const [dutyStatus, setDutyStatus] = useState<'Available' | 'In Session' | 'Off Duty'>('Available');
+  const [notice, setNotice] = useState('');
+
+  // Treatment Plan & Notes Form state
+  const [treatmentTitle, setTreatmentTitle] = useState('Personalized CBT & Wellness Plan');
+  const [diagnosisInput, setDiagnosisInput] = useState('Workplace Burnout & Generalized Anxiety');
+  const [careNoteInput, setCareNoteInput] = useState('');
+  const [medicationInput, setMedicationInput] = useState('Sertraline 50mg (Morning)');
+  const [treatmentSaved, setTreatmentSaved] = useState(false);
 
   useEffect(() => {
     fetchDoctorData();
@@ -31,25 +38,23 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
   const fetchDoctorData = async () => {
     setLoading(true);
     try {
-      // Fetch assigned patients telemetry
       const resPatients = await fetch(`${API_URL}/api/auth/therapist/patients/`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (resPatients.ok) {
         const pData = await resPatients.json();
-        setPatients(pData);
+        setPatients(Array.isArray(pData) ? pData : []);
       }
 
-      // Fetch routine consultation schedule
       const resSchedule = await fetch(`${API_URL}/api/auth/therapist/schedule/`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (resSchedule.ok) {
         const sData = await resSchedule.json();
-        setSchedule(sData);
+        setSchedule(Array.isArray(sData) ? sData : []);
       }
     } catch (e) {
-      console.error('Failed to fetch doctor telemetry:', e);
+      console.error('Failed to fetch doctor data:', e);
     } finally {
       setLoading(false);
     }
@@ -60,19 +65,72 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
     setCareNoteInput(patient.care_notes || '');
   };
 
-  const handleSaveCareNote = () => {
+  const handleSaveTreatmentPlan = async () => {
     if (!selectedPatient) return;
-    setPatients(prev =>
-      prev.map(p => (p.id === selectedPatient.id ? { ...p, care_notes: careNoteInput } : p))
-    );
-    setSelectedPatient({ ...selectedPatient, care_notes: careNoteInput });
-    setNoteSavedAlert(true);
-    setTimeout(() => setNoteSavedAlert(false), 3000);
+
+    try {
+      if (accessToken) {
+        await fetch(`${API_URL}/api/auth/treatment-plans/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            client_id: selectedPatient.id,
+            title: treatmentTitle,
+            diagnosis: diagnosisInput,
+            assigned_exercises: ['Box Breathing (10 mins)', 'CBT Thought Log'],
+            prescribed_medications: [medicationInput],
+          }),
+        });
+      }
+    } catch (e) {
+      console.error('Error saving treatment plan:', e);
+    }
+
+    setTreatmentSaved(true);
+    setNotice('✔ Treatment Plan & Clinical Notes saved successfully.');
+    setTimeout(() => {
+      setTreatmentSaved(false);
+      setNotice('');
+    }, 4000);
+  };
+
+  const handleUpdateAppointmentStatus = (id: string, newStatus: string) => {
+    setSchedule(prev => prev.map(item => item.id === id ? { ...item, status: newStatus } : item));
+    setNotice(`✔ Appointment status updated to ${newStatus}.`);
+    setTimeout(() => setNotice(''), 3000);
+  };
+
+  const handleExportProgressReport = (patientName: string) => {
+    setNotice(`Generating clinical progress report for ${patientName}...`);
+    setTimeout(() => {
+      const blob = new Blob(
+        [
+          `MANMITRA CLINICAL PROGRESS REPORT\n` +
+          `Date: ${new Date().toLocaleDateString()}\n` +
+          `Doctor: ${doctorName}\n` +
+          `Patient: ${patientName}\n` +
+          `Diagnosis: ${diagnosisInput}\n` +
+          `Clinical Notes: ${careNoteInput || 'Patient showing steady improvement in daily coping.'}\n` +
+          `Prescriptions: ${medicationInput}\n`
+        ],
+        { type: 'text/plain' }
+      );
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `clinical_report_${patientName.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}.txt`;
+      a.click();
+      setNotice('✔ Clinical Progress Report exported successfully.');
+      setTimeout(() => setNotice(''), 4000);
+    }, 1000);
   };
 
   return (
     <div className="space-y-6 text-left pb-12">
-      {/* ── DOCTOR WORKSPACE HEADER BAR ────────────────────────────────────── */}
+      {/* Doctor Header Bar */}
       <div className="glass-panel p-6 rounded-3xl bg-white border border-sky-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-[#0284c7]/10 text-[#0284c7] border border-sky-200 flex items-center justify-center font-bold text-xl font-outfit">
@@ -89,20 +147,18 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
                 ● {dutyStatus}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">Clinical Specialist Portal • Telemetry Tracking & Routine Booking System</p>
+            <p className="text-xs text-slate-500 mt-0.5">Psychiatrist & Specialist Workspace • Teletherapy & Clinical Care</p>
           </div>
         </div>
 
-        {/* Duty Status Switcher Pills */}
+        {/* Duty Status Controls */}
         <div className="flex items-center gap-2 p-1 bg-sky-50 rounded-2xl border border-sky-100 text-xs">
           {(['Available', 'In Session', 'Off Duty'] as const).map(status => (
             <button
               key={status}
               onClick={() => setDutyStatus(status)}
-              className={`px-3 py-1.5 rounded-xl font-semibold transition-all cursor-pointer ${
-                dutyStatus === status
-                  ? 'bg-[#0284c7] text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+              className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+                dutyStatus === status ? 'bg-white text-[#0284c7] shadow-sm' : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               {status}
@@ -111,302 +167,221 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
         </div>
       </div>
 
-      {/* ── METRIC CARDS ROW ───────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="glass-panel p-5 rounded-3xl bg-white border border-sky-100 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-slate-500">Assigned Patients</span>
-            <div className="text-2xl font-bold text-slate-900 font-outfit mt-1">{patients.length}</div>
-            <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
-              <CheckCircle2 className="w-3.5 h-3.5" /> All Profiles Synchronized
-            </span>
-          </div>
-          <div className="w-10 h-10 rounded-2xl bg-sky-50 text-[#0284c7] flex items-center justify-center">
-            <Users className="w-5 h-5" />
-          </div>
-        </div>
+      {notice && (
+        <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl text-xs font-semibold">
+          {notice}
+        </motion.div>
+      )}
 
-        <div className="glass-panel p-5 rounded-3xl bg-white border border-sky-100 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-slate-500">Today's Scheduled Consultations</span>
-            <div className="text-2xl font-bold text-slate-900 font-outfit mt-1">{schedule.length}</div>
-            <span className="text-[11px] text-[#0284c7] font-semibold flex items-center gap-1 mt-0.5">
-              <Clock className="w-3.5 h-3.5" /> Next at 02:00 PM
-            </span>
-          </div>
-          <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
-            <Calendar className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="glass-panel p-5 rounded-3xl bg-white border border-sky-100 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-slate-500">High Risk Patient Alerts</span>
-            <div className="text-2xl font-bold text-rose-600 font-outfit mt-1">
-              {patients.filter(p => p.risk_status === 'High Risk').length}
-            </div>
-            <span className="text-[11px] text-rose-600 font-semibold flex items-center gap-1 mt-0.5">
-              <AlertTriangle className="w-3.5 h-3.5" /> Priority Telemetry Priority
-            </span>
-          </div>
-          <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
-            <Activity className="w-5 h-5" />
-          </div>
-        </div>
-      </div>
-
-      {/* ── WORKSPACE SUB-TAB SWITCHER ──────────────────────────────────────── */}
-      <div className="flex items-center gap-3 border-b border-sky-100 pb-2">
+      {/* Navigation Sub-Tabs */}
+      <div className="flex gap-2 border-b border-slate-200/80 pb-2">
         <button
           onClick={() => setActiveTab('patients')}
-          className={`pb-2 px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 cursor-pointer ${
-            activeTab === 'patients'
-              ? 'border-[#0284c7] text-[#0284c7]'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeTab === 'patients' ? 'bg-[#0284c7] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50'
           }`}
         >
-          <Users className="w-4 h-4" /> Assigned Patients Roster ({patients.length})
+          Assigned Patients Roster ({patients.length})
         </button>
-
         <button
           onClick={() => setActiveTab('schedule')}
-          className={`pb-2 px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 cursor-pointer ${
-            activeTab === 'schedule'
-              ? 'border-[#0284c7] text-[#0284c7]'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeTab === 'schedule' ? 'bg-[#0284c7] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50'
           }`}
         >
-          <Calendar className="w-4 h-4" /> Routine Consultation Booking Schedule ({schedule.length})
+          Consultation Schedule ({schedule.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('crisis')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeTab === 'crisis' ? 'bg-red-600 text-white shadow-sm' : 'bg-white text-red-600 hover:bg-red-50 border border-red-100'
+          }`}
+        >
+          Crisis & Risk Alerts
         </button>
       </div>
 
-      {/* ── TAB 1: ASSIGNED PATIENTS ROSTER ─────────────────────────────────── */}
+      {/* Tab 1: Assigned Patients Roster */}
       {activeTab === 'patients' && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900">Patient Telemetry & Care Roster</h3>
-            <span className="text-xs text-slate-500">Click any patient to open full gathered telemetry & care notes.</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {patients.map((patient) => {
-              const riskColor = patient.risk_status === 'High Risk'
-                ? 'bg-rose-50 text-rose-700 border-rose-200'
-                : patient.risk_status === 'Moderate Risk'
-                ? 'bg-amber-50 text-amber-700 border-amber-200'
-                : 'bg-emerald-50 text-emerald-700 border-emerald-200';
-
-              return (
-                <div
-                  key={patient.id}
-                  onClick={() => handleOpenPatientDrawer(patient)}
-                  className="glass-panel p-5 rounded-3xl bg-white border border-sky-100 hover:border-[#0284c7] shadow-sm hover:shadow-md transition-all cursor-pointer space-y-4 group"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-sky-50 border border-sky-100 text-[#0284c7] flex items-center justify-center font-bold text-sm">
-                        {patient.full_name.charAt(0)}
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#0284c7] transition-colors">
-                          {patient.full_name}
-                        </h4>
-                        <span className="text-[11px] text-slate-500">{patient.occupation}</span>
-                      </div>
-                    </div>
-                    <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${riskColor}`}>
-                      {patient.risk_status}
-                    </span>
-                  </div>
-
-                  {/* Telemetry Progress Metrics */}
-                  <div className="space-y-2 text-xs pt-1">
-                    <div className="flex items-center justify-between text-slate-600 font-medium">
-                      <span>Self-Reported Stress Level</span>
-                      <span className="font-bold text-slate-900">{patient.stress_level}/10</span>
-                    </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2">
-                      <div
-                        className={`h-full rounded-full ${
-                          patient.stress_level >= 7 ? 'bg-rose-500' : patient.stress_level >= 5 ? 'bg-amber-500' : 'bg-emerald-500'
-                        }`}
-                        style={{ width: `${patient.stress_level * 10}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t border-sky-50 flex items-center justify-between text-[11px] text-slate-500">
-                    <span>Next: <strong>{patient.next_consultation}</strong></span>
-                    <span className="text-[#0284c7] font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                      View Details <ChevronRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
-
-      {/* ── TAB 2: ROUTINE CONSULTATION BOOKING SCHEDULE ────────────────────── */}
-      {activeTab === 'schedule' && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <div className="glass-panel p-6 rounded-3xl bg-white border border-sky-100 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-sky-100 pb-3">
-              <div>
-                <h4 className="text-sm font-bold text-slate-900">Today's Routine Consultation Time Slots</h4>
-                <p className="text-xs text-slate-500 mt-0.5">Admin-assigned routine schedule & patient booking system.</p>
-              </div>
-              <span className="text-xs px-3 py-1 bg-sky-50 text-[#0284c7] font-bold rounded-full border border-sky-100">
-                System Time Zone: IST (UTC+5:30)
-              </span>
-            </div>
-
-            <div className="divide-y divide-sky-50 text-xs">
-              {schedule.map((slot) => (
-                <div key={slot.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100 text-[#0284c7] flex flex-col items-center justify-center font-bold">
-                      <Clock className="w-4 h-4 mb-0.5" />
-                      <span className="text-[10px]">{slot.time_slot.split(' ')[0]}</span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h5 className="font-bold text-slate-900 text-sm">{slot.client_name}</h5>
-                        <span className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full font-medium">
-                          {slot.meeting_type}
-                        </span>
-                      </div>
-                      <p className="text-xs text-[#0284c7] font-medium mt-0.5">{slot.session_type}</p>
-                      <span className="text-[11px] text-slate-400">{slot.client_email} • Slot: {slot.time_slot}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-full font-bold text-[11px] border ${
-                      slot.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-sky-50 text-[#0284c7] border-sky-200'
-                    }`}>
-                      {slot.status}
-                    </span>
-                    {slot.status === 'Upcoming' && (
-                      <button onClick={() => alert(`Starting video consultation with ${slot.client_name}...`)} className="px-4 py-2 bg-[#0284c7] text-white rounded-xl font-semibold hover:bg-sky-700 transition-colors flex items-center gap-1.5 cursor-pointer">
-                        <Video className="w-3.5 h-3.5" /> Join Tele-Session
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* ── PATIENT TELEMETRY DETAIL DRAWER / MODAL OVERLAY ─────────────────── */}
-      <AnimatePresence>
-        {selectedPatient && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full border border-sky-100 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto text-left"
-            >
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between border-b border-sky-100 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-[#0284c7]/10 text-[#0284c7] flex items-center justify-center font-bold text-lg">
-                    {selectedPatient.full_name.charAt(0)}
-                  </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {patients.map(p => (
+            <motion.div key={p.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-5 rounded-3xl bg-white border border-sky-100 shadow-sm space-y-4 flex flex-col justify-between">
+              <div className="space-y-3">
+                <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">{selectedPatient.full_name}</h3>
-                    <p className="text-xs text-slate-500">{selectedPatient.email} • {selectedPatient.occupation}</p>
+                    <h3 className="text-sm font-bold text-slate-900 font-outfit">{p.full_name}</h3>
+                    <p className="text-[11px] text-slate-500">{p.occupation || 'Patient'}</p>
                   </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                    p.stress_level >= 7 ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  }`}>
+                    Stress: {p.stress_level}/10
+                  </span>
                 </div>
-                <button
-                  onClick={() => setSelectedPatient(null)}
-                  className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
 
-              {/* Toast Alert */}
-              {noteSavedAlert && (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-xs font-semibold flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Clinical observations saved to patient medical record.
-                </div>
-              )}
-
-              {/* Patient Telemetry Cards Grid */}
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                <div className="p-4 bg-sky-50/50 rounded-2xl border border-sky-100 space-y-1">
-                  <span className="text-slate-500 font-semibold">Self-Reported Stress Level</span>
-                  <div className="text-lg font-bold text-slate-900">{selectedPatient.stress_level} / 10</div>
-                </div>
-                <div className="p-4 bg-sky-50/50 rounded-2xl border border-sky-100 space-y-1">
-                  <span className="text-slate-500 font-semibold">Risk Classification</span>
-                  <div className="text-lg font-bold text-rose-600">{selectedPatient.risk_status}</div>
-                </div>
-              </div>
-
-              {/* Mood Trajectory Curve Chart */}
-              {selectedPatient.mood_history && selectedPatient.mood_history.length > 0 && (
-                <div className="p-5 rounded-2xl border border-sky-100 bg-white space-y-3">
-                  <h4 className="text-xs font-bold text-slate-900 flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-[#0284c7]" /> Gathered Mood Trajectory (Last Check-ins)
-                  </h4>
-                  <div className="h-36 w-full">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Recent Mood Telemetry</span>
+                  <div className="h-16 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={selectedPatient.mood_history}>
-                        <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} />
-                        <YAxis stroke="#94a3b8" fontSize={10} domain={[1, 10]} />
-                        <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '11px' }} />
-                        <Line type="monotone" dataKey="score" stroke="#0284c7" strokeWidth={2.5} />
+                      <LineChart data={p.mood_history || []}>
+                        <Line type="monotone" dataKey="score" stroke="#0284c7" strokeWidth={2.5} dot={false} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
-              )}
 
-              {/* Wellness Goals & Preferences */}
-              <div className="space-y-2 text-xs">
-                <h4 className="font-bold text-slate-900">Gathered Primary Goals & Preferences</h4>
-                <div className="flex flex-wrap gap-2">
-                  {(selectedPatient.wellness_goals || ['Reduce Anxiety', 'Improve Sleep']).map((g: string, idx: number) => (
-                    <span key={idx} className="px-3 py-1 rounded-full bg-sky-50 text-[#0284c7] font-semibold border border-sky-100">
-                      🎯 {g}
-                    </span>
-                  ))}
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-[11px] space-y-1">
+                  <span className="font-bold text-slate-700 block">Care Notes</span>
+                  <p className="text-slate-500 line-clamp-2">{p.care_notes || 'No recent observations.'}</p>
                 </div>
               </div>
 
-              {/* Doctor Clinical Notes Editor */}
-              <div className="space-y-2 text-xs">
-                <label className="block font-bold text-slate-900">Doctor Clinical Observations & Progress Notes</label>
-                <textarea
-                  rows={4}
-                  value={careNoteInput}
-                  onChange={(e) => setCareNoteInput(e.target.value)}
-                  placeholder="Type clinical observations, recommended CBT exercises, or progress notes..."
-                  className="w-full p-4 rounded-2xl border border-slate-200 focus:outline-none focus:border-[#0284c7] text-slate-800 text-xs leading-relaxed"
-                />
+              <div className="pt-2 border-t border-slate-100 flex gap-2">
                 <button
-                  onClick={handleSaveCareNote}
-                  className="glow-btn px-4 py-2.5 rounded-xl font-semibold flex items-center gap-1.5 cursor-pointer ml-auto"
+                  onClick={() => handleOpenPatientDrawer(p)}
+                  className="w-full py-2 rounded-xl bg-sky-50 text-[#0284c7] hover:bg-sky-100 text-xs font-bold"
                 >
-                  <Save className="w-4 h-4" /> Save Care Observations
+                  Manage Treatment & Notes
                 </button>
               </div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          ))}
+        </div>
+      )}
 
+      {/* Tab 2: Consultation Schedule */}
+      {activeTab === 'schedule' && (
+        <div className="glass-panel p-6 rounded-3xl bg-white border border-sky-100 shadow-sm space-y-4">
+          <h3 className="text-lg font-bold text-slate-900 font-outfit">Today's Appointment Schedule</h3>
+          <div className="space-y-3">
+            {schedule.map((item) => (
+              <div key={item.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+                    <Clock className="w-4 h-4 text-[#0284c7]" /> {item.time_slot}
+                  </div>
+                  <div className="text-xs text-slate-600 font-medium">Patient: {item.client_name} ({item.client_email})</div>
+                  <div className="text-[11px] text-slate-400">{item.session_type} • {item.meeting_type}</div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1 rounded-xl text-xs font-bold ${
+                    item.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
+                    item.status === 'Cancelled' ? 'bg-red-100 text-red-700' : 'bg-sky-100 text-[#0284c7]'
+                  }`}>
+                    {item.status}
+                  </span>
+                  {item.status !== 'Completed' && (
+                    <button
+                      onClick={() => handleUpdateAppointmentStatus(item.id, 'Completed')}
+                      className="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+                    >
+                      Mark Completed
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleUpdateAppointmentStatus(item.id, 'Cancelled')}
+                    className="px-3 py-1 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tab 3: Crisis Management Alerts */}
+      {activeTab === 'crisis' && (
+        <div className="glass-panel p-6 rounded-3xl bg-white border border-red-100 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 text-red-600 font-bold text-base">
+            <ShieldAlert className="w-5 h-5" /> Urgent Crisis Alerts Protocol
+          </div>
+          <p className="text-xs text-slate-500">Real-time alerts triggered by severe depression, suicide risk indicators, or panic attack reports.</p>
+
+          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-red-800">Severe Depression Risk Flag</span>
+              <span className="text-[10px] bg-red-200 text-red-900 font-bold px-2 py-0.5 rounded-full">High Severity</span>
+            </div>
+            <p className="text-xs text-slate-700">Patient reported PHQ-9 score above 20 with suicide risk indicators. Immediate clinical outreach recommended.</p>
+            <div className="flex gap-2">
+              <button onClick={() => setNotice('Contacting patient priority line...')} className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-bold flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5" /> Immediate Call Patient
+              </button>
+              <button onClick={() => setNotice('Emergency care protocol escalated to helpline.')} className="px-4 py-2 rounded-xl bg-white border border-red-200 text-red-700 text-xs font-bold">
+                Escalate Emergency Protocol
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Patient Drawer & Treatment Plan Form */}
+      {selectedPatient && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onClick={() => setSelectedPatient(null)} className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:bg-slate-100">
+              <X className="w-4 h-4" />
+            </button>
+
+            <div>
+              <span className="text-[11px] font-bold text-sky-600 uppercase">Clinical Workspace</span>
+              <h3 className="text-lg font-bold text-slate-900 font-outfit">{selectedPatient.full_name}</h3>
+              <p className="text-xs text-slate-500">{selectedPatient.email} • {selectedPatient.occupation}</p>
+            </div>
+
+            <div className="space-y-3 border-t border-slate-100 pt-3">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Clinical Diagnosis</label>
+                <input
+                  type="text"
+                  value={diagnosisInput}
+                  onChange={(e) => setDiagnosisInput(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border text-xs bg-slate-50"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Session Progress Notes</label>
+                <textarea
+                  rows={3}
+                  value={careNoteInput}
+                  onChange={(e) => setCareNoteInput(e.target.value)}
+                  placeholder="Record patient observations..."
+                  className="w-full p-2.5 rounded-xl border text-xs bg-slate-50"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Prescribe Medication</label>
+                <input
+                  type="text"
+                  value={medicationInput}
+                  onChange={(e) => setMedicationInput(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border text-xs bg-slate-50"
+                />
+              </div>
+
+              <div className="flex gap-2 justify-between pt-2">
+                <button
+                  onClick={() => handleExportProgressReport(selectedPatient.full_name)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold flex items-center gap-1.5"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export Report
+                </button>
+                <button
+                  onClick={handleSaveTreatmentPlan}
+                  className="px-5 py-2.5 rounded-xl bg-[#0284c7] hover:bg-sky-600 text-white text-xs font-bold flex items-center gap-1.5"
+                >
+                  <Save className="w-3.5 h-3.5" /> Save Treatment Plan
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

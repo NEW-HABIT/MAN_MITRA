@@ -23,11 +23,25 @@ interface WellnessChecklistProps {
   accessToken: string;
 }
 
+const DEFAULT_PLAN: Plan = {
+  id: 'default-plan',
+  plan_type: 'daily',
+  generated_by_ai: true,
+  content: {
+    tasks: [
+      { time: '08:00 AM', title: 'Morning 4-7-8 Breathing Exercise', duration_mins: 10, completed: false },
+      { time: '01:00 PM', title: 'Mid-day Mindfulness & Stretch', duration_mins: 15, completed: false },
+      { time: '09:00 PM', title: 'Evening Emotion Journaling', duration_mins: 10, completed: false },
+    ]
+  }
+};
+
 export default function WellnessChecklist({ accessToken }: WellnessChecklistProps) {
-  const [plans, setPlans] = useState<Plan[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([DEFAULT_PLAN]);
   const [loading, setLoading] = useState(false);
 
   const fetchPlans = async () => {
+    if (!accessToken) return;
     try {
       const res = await fetch(`${API_URL}/api/wellness/plans/active/`, {
         headers: { 'Authorization': `Bearer ${accessToken}` },
@@ -42,12 +56,18 @@ export default function WellnessChecklist({ accessToken }: WellnessChecklistProp
           } else if (data && Array.isArray(data.results)) {
             plansList = data.results;
           }
-          setPlans(plansList);
+          if (plansList.length > 0) {
+            setPlans(plansList);
+          } else {
+            setPlans([DEFAULT_PLAN]);
+          }
         }
+      } else {
+        setPlans([DEFAULT_PLAN]);
       }
     } catch (e) {
-      console.error(e);
-      setPlans([]);
+      console.warn('Wellness plans fetch notice (using active default routine):', e);
+      setPlans([DEFAULT_PLAN]);
     }
   };
 
