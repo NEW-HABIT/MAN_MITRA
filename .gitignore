@@ -29,7 +29,7 @@ backend/venv/
 # Environment Variables & Secrets
 .env
 .env.*
-!.env.example
+.env.example
 *.env
 backend/.env
 frontend/.env.local
