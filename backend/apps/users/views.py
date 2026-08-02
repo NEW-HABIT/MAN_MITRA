@@ -1548,6 +1548,23 @@ class CommunityCommentView(APIView):
         }, status=status.HTTP_201_CREATED)
 
 
+class CommunityPostLikeView(APIView):
+    """
+    POST /api/auth/community/posts/<uuid:post_id>/like/ — Increment likes count on a post.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request: Request, post_id=None) -> Response:
+        try:
+            post = CommunityPost.objects.get(id=post_id)
+            post.likes_count += 1
+            post.save(update_fields=['likes_count'])
+            return Response({'id': str(post.id), 'likes_count': post.likes_count}, status=status.HTTP_200_OK)
+        except CommunityPost.DoesNotExist:
+            return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Notifications & Resources
 # ─────────────────────────────────────────────────────────────────────────────

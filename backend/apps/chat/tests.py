@@ -67,10 +67,16 @@ async def test_websocket_chat_and_crisis_guardrail():
     assert typing_status["type"] == "status"
     assert typing_status["status"] == "typing"
 
-    # Receive final AI assistant response
-    ai_response = await communicator.receive_json_from()
+    # Receive final AI assistant response (or session_updated first)
+    res1 = await communicator.receive_json_from()
+    if res1.get("type") == "session_updated":
+        ai_response = await communicator.receive_json_from()
+    else:
+        ai_response = res1
+
     assert ai_response["type"] == "chat_message"
     assert ai_response["role"] == "assistant"
+
     assert "breath" in ai_response["message"].lower() or "mind" in ai_response["message"].lower() or "experience" in ai_response["message"].lower()
 
     # ── Test Case 2: Crisis Interception ─────────────────────────────────────

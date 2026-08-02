@@ -41,7 +41,29 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // ── 1. Fetch Sessions List ────────────────────────────────────────────────
+  // ── 1. Session Operations ─────────────────────────────────────────────────
+  const createSession = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/chat/sessions/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+      if (res.ok) {
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          setSessions(prev => [data, ...prev.filter(s => s.id !== data.id)]);
+          setActiveSessionId(data.id);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const fetchSessions = async () => {
     try {
       const res = await fetch(`${API_URL}/api/chat/sessions/`, {
@@ -58,8 +80,13 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
             sessionsList = data.results;
           }
           setSessions(sessionsList);
-          if (sessionsList.length > 0 && !activeSessionId) {
-            setActiveSessionId(sessionsList[0].id);
+          if (sessionsList.length > 0) {
+            if (!activeSessionId) {
+              setActiveSessionId(sessionsList[0].id);
+            }
+          } else {
+            // Auto-create initial session if user has no conversations yet
+            await createSession();
           }
         }
       }
@@ -81,27 +108,6 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
     setActiveSessionId(id);
   };
 
-  const createSession = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/chat/sessions/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      });
-      if (res.ok) {
-        const contentType = res.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const data = await res.json();
-          setSessions(prev => [data, ...prev]);
-          setActiveSessionId(data.id);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const deleteSession = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -173,7 +179,10 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
         fetchSessions();
       } else if (data.type === 'status' && data.status === 'typing') {
         setTyping(true);
+      } else if (data.type === 'session_updated') {
+        setSessions(prev => prev.map(s => s.id === data.session_id ? { ...s, title: data.title } : s));
       } else if (data.type === 'chat_message') {
+
         setTyping(false);
         setMessages(prev => [...prev, {
           role: data.role,
@@ -235,9 +244,12 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
             {sessions.map((s) => {
               const active = s.id === activeSessionId;
               return (
-                <button
+                <div
                   key={s.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => handleSessionChange(s.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSessionChange(s.id); }}
                   className={`flex-shrink-0 md:w-full flex items-center justify-between p-2.5 md:p-3 rounded-xl border text-left transition-all text-xs cursor-pointer ${
                     active 
                       ? 'bg-sky-100 border-[#0284c7] text-[#0284c7] font-semibold' 
@@ -249,12 +261,15 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
                     <span className="truncate">{s.title}</span>
                   </div>
                   <button
+                    type="button"
                     onClick={(e) => deleteSession(s.id, e)}
                     className="opacity-40 hover:opacity-100 transition-opacity cursor-pointer p-0.5 hover:text-rose-500 ml-2"
+                    title="Delete Conversation"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
-                </button>
+                </div>
+
               );
             })}
           </div>
@@ -314,8 +329,8 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
             </>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-center text-xs text-slate-500">
-              <Sparkles className="w-8 h-8 text-[#0284c7] mb-3 opacity-60" />
-              <span>Select or start a conversation from the sidebar history list.</span>
+              <Sparkles className="w-8 h-8 text-[#0284c7] mb-3 opacity-60 animate-pulse" />
+              <span>Send a message below to start chatting with your ManMitra Companion.</span>
             </div>
           )}
         </div>
@@ -324,9 +339,10 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
         <form onSubmit={handleSendMessage} className="p-4 border-t border-sky-100 bg-white/60 flex gap-2">
           <input
             type="text"
-            disabled={!activeSessionId || status !== 'connected'}
+            disabled={!activeSessionId}
             className="flex-1 glass-input px-4 py-2.5 rounded-xl text-xs text-slate-800 disabled:opacity-50"
-            placeholder="Type your message to ManMitra..."
+            placeholder={status === 'connected' ? "Type your message to ManMitra..." : "Connecting to ManMitra..."}
+
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
           />

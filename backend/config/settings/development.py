@@ -42,15 +42,16 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 # ─────────────────────────────────────────────
-# Django Debug Toolbar (optional)
+# Django Debug Toolbar (Disabled to prevent psycopg v2/v3 mismatch error)
 # ─────────────────────────────────────────────
-try:
-    import debug_toolbar  # noqa
-    INSTALLED_APPS += ['debug_toolbar']
-    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
-    INTERNAL_IPS = ['127.0.0.1']
-except ImportError:
-    pass
+# try:
+#     import debug_toolbar  # noqa
+#     INSTALLED_APPS += ['debug_toolbar']
+#     MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+#     INTERNAL_IPS = ['127.0.0.1']
+# except ImportError:
+#     pass
+
 
 # ─────────────────────────────────────────────
 # Logging — Verbose SQL + Django logs

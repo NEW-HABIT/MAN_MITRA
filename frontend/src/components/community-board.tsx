@@ -42,44 +42,16 @@ export default function CommunityBoard({ accessToken, userRole }: CommunityBoard
         });
         if (res.ok) {
           const data = await res.json();
-          setPosts(Array.isArray(data) ? data : []);
-          setLoading(false);
-          return;
+          if (Array.isArray(data)) {
+            setPosts(data);
+            setLoading(false);
+            return;
+          }
         }
       }
     } catch (e) {
       console.error('Failed to fetch community posts:', e);
     }
-
-    // Default mock community posts
-    setPosts([
-      {
-        id: 'post-1',
-        title: 'Managing workplace anxiety and burnout',
-        content: 'Lately I have been feeling overwhelmed by back-to-back deadlines. How do you all set healthy boundaries without feeling guilty?',
-        category: 'Work & Stress',
-        author_alias: 'Anonymous Peer',
-        is_anonymous: true,
-        likes_count: 14,
-        is_reported: false,
-        created_at: '2 hours ago',
-        comments: [
-          { id: 'c1', author_alias: 'Supportive Friend', content: 'Taking short 5-minute breathing breaks between meetings helped me immensely!', created_at: '1 hour ago' },
-        ]
-      },
-      {
-        id: 'post-2',
-        title: 'Small wins: I completed 7 straight days of meditation!',
-        content: 'I used to struggle staying still for even 2 minutes. Consistent daily practice has reduced my morning panic attacks significantly.',
-        category: 'Recovery Wins',
-        author_alias: 'Mindful Explorer',
-        is_anonymous: false,
-        likes_count: 29,
-        is_reported: false,
-        created_at: 'Yesterday',
-        comments: []
-      }
-    ]);
     setLoading(false);
   };
 
@@ -118,30 +90,21 @@ export default function CommunityBoard({ accessToken, userRole }: CommunityBoard
       console.error('Failed to create post:', e);
     }
 
-    // Fallback local append
-    const newPost = {
-      id: `post-${Date.now()}`,
-      title: postTitle,
-      content: postContent,
-      category: postCategory,
-      author_alias: isAnonymous ? 'Anonymous Member' : 'Me',
-      is_anonymous: isAnonymous,
-      likes_count: 0,
-      is_reported: false,
-      created_at: 'Just now',
-      comments: []
-    };
-    setPosts([newPost, ...posts]);
-    setNotice('✔ Discussion post published successfully!');
-    setNewPostModal(false);
-    setPostTitle('');
-    setPostContent('');
     setSubmitting(false);
-    setTimeout(() => setNotice(''), 3000);
   };
 
-  const handleLikePost = (postId: string) => {
+  const handleLikePost = async (postId: string) => {
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes_count: p.likes_count + 1 } : p));
+    try {
+      if (accessToken) {
+        await fetch(`${API_URL}/api/auth/community/posts/${postId}/like/`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+      }
+    } catch (e) {
+      console.error('Error liking post:', e);
+    }
   };
 
   const handleAddComment = async (postId: string) => {
@@ -150,7 +113,7 @@ export default function CommunityBoard({ accessToken, userRole }: CommunityBoard
 
     try {
       if (accessToken) {
-        await fetch(`${API_URL}/api/auth/community/comments/`, {
+        const res = await fetch(`${API_URL}/api/auth/community/comments/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -158,22 +121,26 @@ export default function CommunityBoard({ accessToken, userRole }: CommunityBoard
           },
           body: JSON.stringify({ post_id: postId, content: content }),
         });
+        if (res.ok) {
+          const newComment = await res.json();
+          setPosts(prev => prev.map(p => {
+            if (p.id === postId) {
+              return {
+                ...p,
+                comments: [...(p.comments || []), newComment]
+              };
+            }
+            return p;
+          }));
+          setCommentInputs(prev => ({ ...prev, [postId]: '' }));
+          return;
+        }
       }
     } catch (e) {
       console.error('Error commenting:', e);
     }
-
-    setPosts(prev => prev.map(p => {
-      if (p.id === postId) {
-        return {
-          ...p,
-          comments: [...(p.comments || []), { id: `c-${Date.now()}`, author_alias: 'Anonymous Peer', content, created_at: 'Just now' }]
-        };
-      }
-      return p;
-    }));
-    setCommentInputs(prev => ({ ...prev, [postId]: '' }));
   };
+
 
   return (
     <div className="space-y-6 text-left pb-12">

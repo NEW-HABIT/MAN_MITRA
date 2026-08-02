@@ -52,3 +52,7 @@ google-genai>=2.12.0
 whitenoise==6.8.2
 dj-database-url==2.3.0
 psycopg2-binary==2.9.12
+
+# Hugging Face Cloud API client
+huggingface_hub>=0.20.0
+

@@ -31,7 +31,9 @@ from .views import (
     TreatmentPlanView,
     CommunityPostView,
     CommunityCommentView,
+    CommunityPostLikeView,
     PlatformNotificationView,
+
     WellnessResourceView,
 )
 
@@ -77,7 +79,9 @@ urlpatterns = [
 
     # ── Community Forum ──────────────────────────────────────────────────────
     path('community/posts/', CommunityPostView.as_view(), name='community-posts'),
+    path('community/posts/<uuid:post_id>/like/', CommunityPostLikeView.as_view(), name='community-post-like'),
     path('community/comments/', CommunityCommentView.as_view(), name='community-comments'),
+
 
     # ── Notifications & Resources ────────────────────────────────────────────
     path('notifications/', PlatformNotificationView.as_view(), name='notifications'),

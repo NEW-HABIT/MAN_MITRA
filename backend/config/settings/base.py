@@ -263,8 +263,10 @@ FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
 # AI Configuration
 # ─────────────────────────────────────────────
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+HF_TOKEN = config('HF_TOKEN', default=config('HUGGINGFACE_API_KEY', default=''))
 OPENAI_API_KEY = config('OPENAI_API_KEY', default='')
-AI_PROVIDER = config('AI_PROVIDER', default='gemini')  # 'gemini' or 'openai'
+AI_PROVIDER = config('AI_PROVIDER', default='huggingface')  # 'huggingface', 'gemini', or 'openai'
+
 
 # ─────────────────────────────────────────────
 # Channels ASGI Configuration
