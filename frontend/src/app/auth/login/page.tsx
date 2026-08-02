@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Lock, Mail, Sparkles } from 'lucide-react';
+import { ArrowRight, Lock, Mail, Sparkles, Eye, EyeOff } from 'lucide-react';
+
 import { API_URL } from '@/config';
 import WelcomeSplash from '@/components/welcome-splash';
 import ManMitraLogo from '@/components/manmitra-logo';
@@ -23,7 +24,10 @@ export default function LoginPage() {
   const [showSplash, setShowSplash] = useState(false);
   const [userName, setUserName] = useState<string | undefined>(undefined);
 
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
@@ -150,14 +154,23 @@ export default function LoginPage() {
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-[13px]" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
-                className="w-full glass-input pl-11 pr-4 py-2.5 rounded-xl text-sm"
+                className="w-full glass-input pl-11 pr-11 py-2.5 rounded-xl text-sm"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-[11px] text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
+
           </div>
 
           {unverified && (

@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowRight, Check, Loader2, Lock, Mail } from 'lucide-react';
+import { ArrowRight, Check, Loader2, Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import { API_URL } from '@/config';
 import ManMitraLogo from '@/components/manmitra-logo';
 
@@ -16,6 +16,9 @@ function ResetPasswordContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -156,13 +159,21 @@ function ResetPasswordContent() {
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-[13px]" />
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
-                    className="w-full glass-input pl-11 pr-4 py-2.5 rounded-xl text-sm"
+                    className="w-full glass-input pl-11 pr-11 py-2.5 rounded-xl text-sm"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-[11px] text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+                    title={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
@@ -171,16 +182,25 @@ function ResetPasswordContent() {
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-[13px]" />
                   <input
-                    type="password"
+                    type={showConfirmPassword ? 'text' : 'password'}
                     required
-                    className="w-full glass-input pl-11 pr-4 py-2.5 rounded-xl text-sm"
+                    className="w-full glass-input pl-11 pr-11 py-2.5 rounded-xl text-sm"
                     placeholder="••••••••"
                     value={passwordConfirm}
                     onChange={(e) => setPasswordConfirm(e.target.value)}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3.5 top-[11px] text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+                    title={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
             </>
+
           )}
 
           <button

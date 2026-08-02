@@ -6,7 +6,28 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
 from .managers import UserManager
+
+
+
+class EmailOTP(models.Model):
+    """
+    Stores 6-digit Email Verification OTPs for user registration.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField(db_index=True)
+    otp_code = models.CharField(max_length=6)
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:
+        return f"OTP {self.otp_code} for {self.email}"
+
 
 
 class User(AbstractBaseUser, PermissionsMixin):

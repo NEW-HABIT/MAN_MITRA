@@ -10,6 +10,8 @@ from .views import (
     RegisterView,
     LoginView,
     LogoutView,
+    SendEmailOTPView,
+    VerifyEmailOTPView,
     VerifyEmailView,
     ResendVerificationView,
     PasswordResetRequestView,
@@ -33,7 +35,6 @@ from .views import (
     CommunityCommentView,
     CommunityPostLikeView,
     PlatformNotificationView,
-
     WellnessResourceView,
 )
 
@@ -46,11 +47,14 @@ TokenRefreshView = extend_schema(
 )(TokenRefreshView)
 
 urlpatterns = [
-    # ── Registration & Login ─────────────────────────────────────────────────
+    # ── OTP & Registration Flow ──────────────────────────────────────────────
+    path('send-otp/', SendEmailOTPView.as_view(), name='send-otp'),
+    path('verify-otp/', VerifyEmailOTPView.as_view(), name='verify-otp'),
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
+
 
     # ── Email Verification ───────────────────────────────────────────────────
     path('verify-email/', VerifyEmailView.as_view(), name='verify-email'),

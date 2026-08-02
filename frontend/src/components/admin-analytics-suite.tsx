@@ -278,38 +278,29 @@ export default function AdminAnalyticsSuite({
     setTimeout(() => setNotifStatus(''), 4000);
   };
 
-  const DEFAULT_ADMIN_STATS = {
-    total_users: 3,
-    total_clients: 3,
-    total_doctors: 1,
-    total_therapists: 1,
-    total_verified_doctors: 1,
-    total_admins: 1,
-    total_sessions_completed: 2,
-    completed_appointments: 1,
-    upcoming_appointments: 1,
-    cancelled_appointments: 0,
-    ai_conversations_today: 5,
-    emergency_alerts_count: 0,
-    system_uptime_percent: 100.0,
-    server_health: 'Optimal (Healthy)',
-    phq9_distribution: [
-      { severity: 'Minimal (0-4)', percentage: 66.7 },
-      { severity: 'Mild (5-9)', percentage: 33.3 },
-      { severity: 'Moderate (10-14)', percentage: 0.0 },
-      { severity: 'Severe (15-27)', percentage: 0.0 }
-    ],
-    gad7_distribution: [
-      { severity: 'Minimal (0-4)', percentage: 66.7 },
-      { severity: 'Mild (5-9)', percentage: 33.3 },
-      { severity: 'Moderate (10-14)', percentage: 0.0 },
-      { severity: 'Severe (15-21)', percentage: 0.0 }
-    ]
-  };
-
-  const stats = adminStats || DEFAULT_ADMIN_STATS;
-
   const COLORS = ['#0284c7', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'];
+
+  if (!adminStats) {
+    return (
+      <div className="space-y-6 text-left pb-12 animate-pulse">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="glass-panel p-5 rounded-3xl bg-white/60 border border-sky-100 h-28 flex flex-col justify-between">
+              <div className="h-4 bg-slate-200 rounded w-2/3" />
+              <div className="h-8 bg-slate-300 rounded w-1/3" />
+              <div className="h-3 bg-slate-200 rounded w-1/2" />
+            </div>
+          ))}
+        </div>
+        <div className="glass-panel p-6 rounded-3xl bg-white/60 border border-sky-100 h-40 flex items-center justify-center">
+          <div className="text-xs text-slate-400 font-semibold">Loading sanctuary platform metrics...</div>
+        </div>
+      </div>
+    );
+  }
+
+  const stats = adminStats;
+
 
   return (
     <div className="space-y-6 text-left pb-12">
@@ -334,7 +325,8 @@ export default function AdminAnalyticsSuite({
                   <Users className="w-4 h-4" />
                 </div>
               </div>
-              <div className="text-2xl font-bold text-slate-900 font-outfit">{stats.total_clients || stats.total_users || 0}</div>
+              <div className="text-2xl font-bold text-slate-900 font-outfit">{stats.total_users ?? stats.total_clients ?? 0}</div>
+
               <div className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
                 <TrendingUp className="w-3.5 h-3.5" /> Active Platform Members
               </div>

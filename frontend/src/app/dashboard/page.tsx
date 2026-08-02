@@ -9,8 +9,9 @@ import {
   Heart, LayoutDashboard, MessageSquare, BookOpen, User, LogOut, ShieldCheck,
   TrendingUp, Award, BarChart3, Users, Zap, ShieldAlert, Sparkles, Check, Menu, X,
   Stethoscope, Clock, Activity, Star, UserCheck, CheckCircle2, Trash2, UserPlus,
-  Bot, Download, Lock, Brain
+  Bot, Download, Lock, Brain, Eye, EyeOff
 } from 'lucide-react';
+
 
 import WellnessChecklist from '@/components/wellness-checklist';
 import MoodTracker from '@/components/mood-tracker';
@@ -26,62 +27,8 @@ import TherapistBooking from '@/components/therapist-booking';
 import ManMitraLogo from '@/components/manmitra-logo';
 import { API_URL } from '@/config';
 
-const DEFAULT_ADMIN_STATS = {
-  total_users: 1,
-  total_clients: 1,
-  total_doctors: 1,
-  total_therapists: 1,
-  total_verified_doctors: 1,
-  total_admins: 1,
-  total_sessions_completed: 2,
-  completed_appointments: 1,
-  upcoming_appointments: 1,
-  cancelled_appointments: 0,
-  ai_conversations_today: 5,
-  emergency_alerts_count: 0,
-  system_uptime_percent: 100.0,
-  server_health: 'Optimal (Healthy)',
-  doctors_workload: [
-    {
-      id: 'doc-sarah-smith',
-      name: 'Dr. Sarah Smith',
-      email: 'doctor@manmitra.ai',
-      specialty: 'Clinical Psychologist',
-      consultation_fee: '₹1,500 / 45 mins',
-      status: 'Available',
-      active_sessions: 2,
-      max_capacity: 5,
-      utilization_percent: 40,
-      rating: 5.0,
-      is_active: true,
-    }
-  ],
-  members_list: [
-    {
-      id: 'client-aarav-sharma',
-      name: 'Aarav Sharma',
-      email: 'client@manmitra.ai',
-      occupation: 'Software Engineer',
-      assigned_doctor: 'Dr. Sarah Smith (Clinical Psychologist)',
-      status: 'Active',
-      is_active: true,
-    }
-  ],
-  phq9_distribution: [
-    { severity: 'Minimal (0-4)', percentage: 66.7 },
-    { severity: 'Mild (5-9)', percentage: 33.3 },
-    { severity: 'Moderate (10-14)', percentage: 0.0 },
-    { severity: 'Severe (15-27)', percentage: 0.0 }
-  ],
-  gad7_distribution: [
-    { severity: 'Minimal (0-4)', percentage: 66.7 },
-    { severity: 'Mild (5-9)', percentage: 33.3 },
-    { severity: 'Moderate (10-14)', percentage: 0.0 },
-    { severity: 'Severe (15-21)', percentage: 0.0 }
-  ]
-};
-
 export default function DashboardPage() {
+
   const router = useRouter();
   const { user, accessToken, logout, isAuthenticated } = useAuthStore();
   const [activeTab, setActiveTab] = useState<
@@ -98,12 +45,15 @@ export default function DashboardPage() {
   const [streakStats, setStreakStats] = useState({ current: 0, longest: 0 });
 
   // Admin stats state & Doctor registration state
-  const [adminStats, setAdminStats] = useState<any | null>(DEFAULT_ADMIN_STATS);
+  const [adminStats, setAdminStats] = useState<any | null>(null);
+
   const [addDoctorModalOpen, setAddDoctorModalOpen] = useState(false);
   const [newDocName, setNewDocName] = useState('');
   const [newDocEmail, setNewDocEmail] = useState('');
   const [newDocPassword, setNewDocPassword] = useState('');
+  const [showDocPassword, setShowDocPassword] = useState(false);
   const [newDocSpecialty, setNewDocSpecialty] = useState('');
+
   const [newDocFee, setNewDocFee] = useState('₹1,500 / 45 mins');
   const [docSubmitting, setDocSubmitting] = useState(false);
   const [docError, setDocError] = useState('');
@@ -128,6 +78,7 @@ export default function DashboardPage() {
   const [detailsFormFee, setDetailsFormFee] = useState('₹1,500 / 45 mins');
   const [detailsFormActive, setDetailsFormActive] = useState(true);
   const [detailsFormPassword, setDetailsFormPassword] = useState('');
+  const [showDetailsPassword, setShowDetailsPassword] = useState(false);
   const [detailsSubmitting, setDetailsSubmitting] = useState(false);
   const [detailsStatusMsg, setDetailsStatusMsg] = useState('');
 
@@ -139,6 +90,7 @@ export default function DashboardPage() {
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberPassword, setNewMemberPassword] = useState('');
+  const [showMemberPassword, setShowMemberPassword] = useState(false);
   const [newMemberOccupation, setNewMemberOccupation] = useState('');
   const [memberSubmitting, setMemberSubmitting] = useState(false);
   const [memberError, setMemberError] = useState('');
@@ -147,6 +99,8 @@ export default function DashboardPage() {
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [resetTargetUser, setResetTargetUser] = useState<{ id: string; name: string } | null>(null);
   const [resetNewPassword, setResetNewPassword] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+
   const [resetStatus, setResetStatus] = useState('');
 
   // Assign Patient to Doctor Modal state
@@ -267,10 +221,13 @@ export default function DashboardPage() {
       fetchAdminStats();
       const interval = setInterval(() => {
         fetchAdminStats();
-      }, 3000);
+      }, 10000);
+
       return () => clearInterval(interval);
     }
   }, [user, accessToken]);
+
+
 
   const handleToggleUserStatus = async (userId: string, currentActiveStatus: boolean) => {
     if (!accessToken) return;
@@ -299,8 +256,9 @@ export default function DashboardPage() {
         body: JSON.stringify({ is_active: newStatus }),
       });
       if (res.ok) {
-        await fetchAdminStats();
+        fetchAdminStats();
       }
+
     } catch (e) {
       console.error('Failed to toggle status:', e);
     }
@@ -545,6 +503,19 @@ export default function DashboardPage() {
 
   const handleDeleteUser = async (userId: string, name: string) => {
     if (!confirm(`Are you sure you want to permanently delete account for "${name}"?`)) return;
+
+    // Instant Optimistic UI Update (0ms latency response)
+    setAdminStats((prev: any) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        total_users: Math.max(0, (prev.total_users || 1) - 1),
+        total_clients: Math.max(0, (prev.total_clients || 1) - 1),
+        members_list: (prev.members_list || []).filter((m: any) => m.id !== userId),
+        doctors_workload: (prev.doctors_workload || []).filter((doc: any) => doc.id !== userId),
+      };
+    });
+
     try {
       const res = await fetch(`${API_URL}/api/auth/admin/users/${userId}/`, {
         method: 'DELETE',
@@ -553,15 +524,18 @@ export default function DashboardPage() {
         },
       });
       if (res.ok) {
-        await fetchAdminStats();
+        fetchAdminStats(); // Background sync
       } else {
         const data = await res.json();
         alert(data.error || 'Failed to delete user.');
+        fetchAdminStats(); // Revert on failure
       }
     } catch (e) {
       console.error(e);
+      fetchAdminStats();
     }
   };
+
 
   const handleResetUserPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1584,15 +1558,26 @@ export default function DashboardPage() {
 
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">Password</label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={newDocPassword}
-                    onChange={(e) => setNewDocPassword(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showDocPassword ? 'text' : 'password'}
+                      required
+                      placeholder="••••••••"
+                      value={newDocPassword}
+                      onChange={(e) => setNewDocPassword(e.target.value)}
+                      className="w-full pl-4 pr-11 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowDocPassword(!showDocPassword)}
+                      className="absolute right-3.5 top-[11px] text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+                      title={showDocPassword ? "Hide password" : "Show password"}
+                    >
+                      {showDocPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
+
 
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">Specialty / Qualification</label>
@@ -1841,15 +1826,26 @@ export default function DashboardPage() {
 
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">Password</label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={newMemberPassword}
-                    onChange={(e) => setNewMemberPassword(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showMemberPassword ? 'text' : 'password'}
+                      required
+                      placeholder="••••••••"
+                      value={newMemberPassword}
+                      onChange={(e) => setNewMemberPassword(e.target.value)}
+                      className="w-full pl-4 pr-11 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowMemberPassword(!showMemberPassword)}
+                      className="absolute right-3.5 top-[11px] text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+                      title={showMemberPassword ? "Hide password" : "Show password"}
+                    >
+                      {showMemberPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
+
 
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">
@@ -2058,16 +2054,27 @@ export default function DashboardPage() {
               <form onSubmit={handleResetUserPassword} className="space-y-3 text-xs">
                 <div>
                   <label className="block text-slate-700 font-bold mb-1">New Password</label>
-                  <input
-                    type="password"
-                    required
-                    minLength={8}
-                    placeholder="Enter new secure password..."
-                    value={resetNewPassword}
-                    onChange={(e) => setResetNewPassword(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showResetPassword ? 'text' : 'password'}
+                      required
+                      minLength={8}
+                      placeholder="Enter new secure password..."
+                      value={resetNewPassword}
+                      onChange={(e) => setResetNewPassword(e.target.value)}
+                      className="w-full pl-4 pr-11 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowResetPassword(!showResetPassword)}
+                      className="absolute right-3.5 top-[11px] text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+                      title={showResetPassword ? "Hide password" : "Show password"}
+                    >
+                      {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
+
 
                 <div className="pt-2 flex justify-end gap-2">
                   <button
@@ -2342,16 +2349,27 @@ export default function DashboardPage() {
 
                   <div>
                     <label className="block text-slate-700 font-bold mb-1">New Account Password</label>
-                    <input
-                      type="password"
-                      required
-                      minLength={8}
-                      placeholder="Enter new secure password..."
-                      value={detailsFormPassword}
-                      onChange={(e) => setDetailsFormPassword(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showDetailsPassword ? 'text' : 'password'}
+                        required
+                        minLength={8}
+                        placeholder="Enter new secure password..."
+                        value={detailsFormPassword}
+                        onChange={(e) => setDetailsFormPassword(e.target.value)}
+                        className="w-full pl-4 pr-11 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowDetailsPassword(!showDetailsPassword)}
+                        className="absolute right-3.5 top-[11px] text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+                        title={showDetailsPassword ? "Hide password" : "Show password"}
+                      >
+                        {showDetailsPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
+
 
                   <div className="pt-2 flex justify-end gap-2">
                     <button

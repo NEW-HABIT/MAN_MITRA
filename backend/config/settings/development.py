@@ -31,9 +31,25 @@ DATABASES = {
 }
 
 # ─────────────────────────────────────────────
-# Email — Print to console during development
+# Email — Resend SMTP if configured, else console
 # ─────────────────────────────────────────────
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.resend.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='resend')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='ManMitra <onboarding@resend.dev>')
+
+if EMAIL_HOST_PASSWORD and 'your_resend_api_key' not in EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    if EMAIL_PORT == 465:
+        EMAIL_USE_TLS = False
+        EMAIL_USE_SSL = True
+    else:
+        EMAIL_USE_TLS = True
+        EMAIL_USE_SSL = False
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 
 # ─────────────────────────────────────────────
 # CORS — Allow all origins in development

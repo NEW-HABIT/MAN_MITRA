@@ -50,11 +50,11 @@ def send_verification_email(user, request=None) -> None:
     token = _build_signed_token(user.email)
     verification_url = f"{settings.FRONTEND_URL}/auth/verify-email?token={token}"
 
-    subject = '✨ Verify Your ManMitra Account'
+    subject = 'Verify Your ManMitra Account'
     text_body = f"""
 Hi {user.get_short_name()},
 
-Welcome to ManMitra — Your AI Companion for Mental Wellness! 🧠💚
+Welcome to ManMitra — Your AI Companion for Mental Wellness!
 
 Please verify your email address by clicking the link below:
 {verification_url}
@@ -67,15 +67,15 @@ With care,
 The ManMitra Team
     """.strip()
 
-    # Send plain-text email (HTML template can be added later)
     try:
-        send_mail(
+        msg = EmailMultiAlternatives(
             subject=subject,
-            message=text_body,
+            body=text_body,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
+            to=[user.email],
         )
+        msg.encoding = 'utf-8'
+        msg.send(fail_silently=False)
         logger.info(f'Verification email sent to: {user.email}')
     except Exception as e:
         logger.error(f'Failed to send verification email to {user.email}: {e}')
@@ -90,7 +90,7 @@ def send_password_reset_email(user, request=None) -> None:
     token = _build_signed_token(user.email)
     reset_url = f"{settings.FRONTEND_URL}/auth/reset-password?token={token}"
 
-    subject = '🔐 Reset Your ManMitra Password'
+    subject = 'Reset Your ManMitra Password'
     text_body = f"""
 Hi {user.get_short_name()},
 
@@ -108,14 +108,16 @@ The ManMitra Team
     """.strip()
 
     try:
-        send_mail(
+        msg = EmailMultiAlternatives(
             subject=subject,
-            message=text_body,
+            body=text_body,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
+            to=[user.email],
         )
+        msg.encoding = 'utf-8'
+        msg.send(fail_silently=False)
         logger.info(f'Password reset email sent to: {user.email}')
     except Exception as e:
         logger.error(f'Failed to send password reset email to {user.email}: {e}')
         raise
+
