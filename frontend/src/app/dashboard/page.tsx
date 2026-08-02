@@ -815,7 +815,7 @@ export default function DashboardPage() {
                   }`}
                 >
                   <Brain className="w-4 h-4" />
-                  Clinical Assessments (PHQ/GAD)
+                  Self-Reflection & Check-ins
                 </button>
 
                 <button
@@ -839,7 +839,7 @@ export default function DashboardPage() {
                   }`}
                 >
                   <Stethoscope className="w-4 h-4" />
-                  Therapist Booking
+                  Connect with a Guide
                 </button>
 
                 <button
@@ -879,7 +879,7 @@ export default function DashboardPage() {
             <div className="truncate text-left">
               <h5 className="text-xs font-bold truncate text-slate-800">{user.full_name}</h5>
               <span className="text-[10px] text-slate-500 capitalize tracking-wider flex items-center gap-1 font-semibold">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#0284c7]" /> {user.role === 'admin' ? 'Admin Operations' : user.role === 'therapist' ? 'Specialist Roster' : 'Personal Sanctuary'}
+                <ShieldCheck className="w-3.5 h-3.5 text-[#0284c7]" /> {user.role === 'admin' ? 'Admin Operations' : user.role === 'therapist' ? 'Guide Care Team' : 'Personal Sanctuary'}
               </span>
             </div>
           </div>
@@ -911,39 +911,40 @@ export default function DashboardPage() {
               {activeTab === 'admin' 
                 ? 'Platform Summary & Overview' 
                 : activeTab === 'doctors' 
-                ? 'Doctor Schedules & Rosters' 
+                ? 'Guide Schedules & Care Team' 
                 : activeTab === 'members' 
-                ? 'User & Doctor Accounts' 
+                ? 'User & Guide Accounts' 
                 : activeTab === 'ai_analytics'
-                ? 'AI Assistant & Chat Analytics'
+                ? 'AI Companion Insights'
                 : activeTab === 'crisis_monitoring'
-                ? 'Urgent Safety & Risk Alerts'
+                ? 'Support & Safety Care Alerts'
                 : activeTab === 'clinical_insights'
-                ? 'Clinical Assessment Analytics'
+                ? 'Reflection & Progress Insights'
                 : activeTab === 'content_mgmt'
-                ? 'Wellness & Therapy Content'
+                ? 'Wellness Content & Activities'
                 : activeTab === 'platform_audit'
-                ? 'Security & Activity Audit'
+                ? 'Security & Activity Log'
                 : activeTab === 'reports_export'
                 ? 'Reports & Data Export'
                 : activeTab === 'assessments'
-                ? 'Mental Health Assessments'
+                ? 'Self-Reflection & Check-ins'
                 : activeTab === 'wellness_hub'
                 ? 'Wellness & Relaxation Hub'
                 : activeTab === 'booking'
-                ? 'Therapist & Doctor Booking'
+                ? 'Connect with a Guide'
                 : activeTab === 'community'
                 ? 'Community Support Forum'
                 : activeTab === 'profile'
                 ? 'Profile & Security Settings'
                 : activeTab === 'dashboard' 
-                ? (user.role === 'therapist' ? 'Specialist Workspace' : 'Home Dashboard')
+                ? (user.role === 'therapist' ? 'Guide Workspace' : 'Home Dashboard')
                 : activeTab === 'chat' 
                 ? (user.role === 'therapist' ? 'Consultation Companion' : 'AI Support Companion') 
-                : (user.role === 'therapist' ? 'Care Notes & Observations' : 'Personal Journal')
+                : (user.role === 'therapist' ? 'Personal Insights & Notes' : 'Personal Journal')
               }
             </h2>
           </div>
+
           <div className="flex items-center gap-4">
             {activeTab === 'dashboard' && user.role === 'user' && (
               <button

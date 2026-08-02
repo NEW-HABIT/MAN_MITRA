@@ -198,11 +198,11 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
       <div className="glass-panel p-6 rounded-3xl bg-gradient-to-r from-sky-900 via-slate-900 to-sky-950 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sky-400 font-semibold text-xs uppercase tracking-wider">
-            <Brain className="w-4 h-4" /> Standardized Clinical Assessments
+            <Brain className="w-4 h-4" /> Guided Self-Reflection Check-ins
           </div>
-          <h2 className="text-2xl font-bold font-outfit">PHQ-9 & GAD-7 Assessment Suite</h2>
+          <h2 className="text-2xl font-bold font-outfit">Emotional Well-Being Check-in</h2>
           <p className="text-xs text-sky-200/80 max-w-xl">
-            Complete validated clinical self-assessments to measure depression, anxiety, stress levels, and receive personalized AI care recommendations.
+            Take a gentle, guided check-in to reflect on your emotional energy, calm, and receive personalized self-care recommendations.
           </p>
         </div>
         <div className="flex gap-2">
@@ -212,7 +212,7 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
               activeType === 'PHQ9' ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30' : 'bg-white/10 text-white hover:bg-white/20'
             }`}
           >
-            PHQ-9 (Depression)
+            Mood & Energy Check
           </button>
           <button
             onClick={() => setActiveType('GAD7')}
@@ -220,7 +220,7 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
               activeType === 'GAD7' ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30' : 'bg-white/10 text-white hover:bg-white/20'
             }`}
           >
-            GAD-7 (Anxiety)
+            Calmness & Peace Check
           </button>
         </div>
       </div>
@@ -238,7 +238,7 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
           {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
-              <span>{activeType === 'PHQ9' ? 'PHQ-9 Patient Health Questionnaire' : 'GAD-7 Generalized Anxiety Scale'}</span>
+              <span>{activeType === 'PHQ9' ? 'Mood & Energy Check-in' : 'Calmness & Peace Check-in'}</span>
               <span>{answeredCount} of {totalQuestions} Answered ({progressPercent}%)</span>
             </div>
             <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
@@ -247,7 +247,7 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
           </div>
 
           <p className="text-xs text-slate-500 italic bg-sky-50/50 p-3 rounded-xl border border-sky-100/60">
-            "Over the last 2 weeks, how often have you been bothered by any of the following problems?"
+            "Over the last 2 weeks, how often have you felt bothered by any of the following experiences?"
           </p>
 
           {/* Question Items */}
@@ -295,11 +295,11 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
             >
               {isSubmitting ? (
                 <>
-                  <RefreshCw className="w-4 h-4 animate-spin" /> Calculating Clinical Score...
+                  <RefreshCw className="w-4 h-4 animate-spin" /> Preparing Your Insights...
                 </>
               ) : (
                 <>
-                  Submit Assessment <ArrowRight className="w-4 h-4" />
+                  Complete Check-in <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
@@ -310,36 +310,36 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
         <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="glass-panel p-6 rounded-3xl bg-white border border-sky-100 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
-              <span className="text-[11px] font-bold text-sky-600 uppercase tracking-wider">Assessment Completed</span>
+              <span className="text-[11px] font-bold text-sky-600 uppercase tracking-wider">Check-in Completed</span>
               <h3 className="text-xl font-bold text-slate-900 font-outfit">
-                {result.type === 'PHQ9' ? 'PHQ-9 Depression Score Result' : 'GAD-7 Anxiety Score Result'}
+                {result.type === 'PHQ9' ? 'Mood & Energy Insights' : 'Calmness & Peace Insights'}
               </h3>
             </div>
             <div className="flex gap-2">
               <button onClick={handleExportPDF} className="px-4 py-2 rounded-xl bg-sky-50 text-[#0284c7] border border-sky-200 hover:bg-sky-100 text-xs font-bold flex items-center gap-1.5">
-                <Download className="w-3.5 h-3.5" /> Download Report
+                <Download className="w-3.5 h-3.5" /> Download Insights
               </button>
               <button onClick={handleReset} className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold">
-                Retake Assessment
+                Retake Check-in
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-5 rounded-2xl bg-sky-50/70 border border-sky-100 text-center space-y-1">
-              <span className="text-xs text-slate-500 font-medium">Total Score</span>
+              <span className="text-xs text-slate-500 font-medium">Insight Score</span>
               <div className="text-4xl font-extrabold text-[#0284c7] font-outfit">{result.score} <span className="text-base text-slate-400 font-normal">/ {result.max_score}</span></div>
             </div>
 
             <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-100 text-center space-y-1">
-              <span className="text-xs text-amber-700 font-medium">Severity Classification</span>
+              <span className="text-xs text-amber-700 font-medium">Well-Being Status</span>
               <div className="text-lg font-bold text-amber-900 font-outfit">{result.severity}</div>
             </div>
 
             <div className="p-5 rounded-2xl bg-emerald-50/70 border border-emerald-100 text-center space-y-1">
-              <span className="text-xs text-emerald-700 font-medium">Clinical Recommendation</span>
+              <span className="text-xs text-emerald-700 font-medium">Suggested Care Path</span>
               <div className="text-xs font-bold text-emerald-900 pt-1">
-                {result.score >= 15 ? 'Therapist Consultation Advised' : 'Self-Care & Guided CBT'}
+                {result.score >= 15 ? 'Connecting with a Guide Recommended' : 'Mindful Self-Care & Guided Practice'}
               </div>
             </div>
           </div>
@@ -347,7 +347,8 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
           {/* AI Recommended Care Plan */}
           <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-sky-500" /> AI-Generated Clinical Care Recommendations
+              <Sparkles className="w-4 h-4 text-sky-500" /> Personalized Wellness & Care Suggestions
+
             </h4>
             <ul className="space-y-2 text-xs text-slate-700">
               {result.recommendations.map((rec: string, i: number) => (

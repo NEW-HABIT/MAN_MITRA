@@ -147,7 +147,7 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
                 ● {dutyStatus}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">Psychiatrist & Specialist Workspace • Teletherapy & Clinical Care</p>
+            <p className="text-xs text-slate-500 mt-0.5">Guide & Wellness Workspace • 1-on-1 Sessions & Care Support</p>
           </div>
         </div>
 
@@ -181,7 +181,7 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
             activeTab === 'patients' ? 'bg-[#0284c7] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50'
           }`}
         >
-          Assigned Patients Roster ({patients.length})
+          Members Under Care ({patients.length})
         </button>
         <button
           onClick={() => setActiveTab('schedule')}
@@ -189,7 +189,7 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
             activeTab === 'schedule' ? 'bg-[#0284c7] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50'
           }`}
         >
-          Consultation Schedule ({schedule.length})
+          Session Schedule ({schedule.length})
         </button>
         <button
           onClick={() => setActiveTab('crisis')}
@@ -197,7 +197,8 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
             activeTab === 'crisis' ? 'bg-red-600 text-white shadow-sm' : 'bg-white text-red-600 hover:bg-red-50 border border-red-100'
           }`}
         >
-          Crisis & Risk Alerts
+          Immediate Support Alerts
+
         </button>
       </div>
 

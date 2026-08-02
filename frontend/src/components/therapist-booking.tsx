@@ -128,7 +128,7 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
           </div>
           <h2 className="text-2xl font-bold font-outfit">Therapist & Doctor Booking</h2>
           <p className="text-xs text-sky-100/80 max-w-xl">
-            Book confidential 1-on-1 consultations with licensed psychologists and psychiatrists.
+            Book warm, confidential 1-on-1 sessions with verified wellness guides and specialists.
           </p>
         </div>
       </div>
@@ -139,7 +139,7 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input
             type="text"
-            placeholder="Search doctor by name or specialty..."
+            placeholder="Search guide by name or area of focus..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 rounded-xl text-xs bg-slate-50 border border-slate-200 focus:outline-none focus:border-sky-400"
@@ -171,7 +171,7 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
                   {doc.name.split(' ')[1]?.[0] || 'D'}
                 </div>
                 <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" /> Verified License
+                  <ShieldCheck className="w-3 h-3" /> Verified Specialist
                 </span>
               </div>
 
@@ -223,7 +223,7 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
             {bookingStep === 'details' && (
               <div className="space-y-4">
                 <div>
-                  <span className="text-[11px] font-bold text-sky-600 uppercase">Consultation Booking</span>
+                  <span className="text-[11px] font-bold text-sky-600 uppercase">Guided Session Booking</span>
                   <h3 className="text-base font-bold text-slate-900 font-outfit">{selectedDoctor.name}</h3>
                   <p className="text-xs text-slate-500">{selectedDoctor.title}</p>
                 </div>
@@ -247,17 +247,18 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Consultation Type</label>
+                  <label className="text-xs font-bold text-slate-700 block">Session Focus & Type</label>
                   <select
                     value={selectedSessionType}
                     onChange={(e) => setSelectedSessionType(e.target.value)}
                     className="w-full p-2.5 rounded-xl border text-xs bg-white"
                   >
-                    <option>Cognitive Behavioral Therapy (CBT)</option>
-                    <option>Mindfulness & Stress Management</option>
-                    <option>Psychiatric Evaluation</option>
+                    <option>Mindful Reflection & Thought Guidance</option>
+                    <option>Mindfulness & Stress Relief Practice</option>
+                    <option>Holistic Mind & Wellness Guidance</option>
                   </select>
                 </div>
+
 
                 <div className="p-3 rounded-xl bg-slate-50 border flex items-center justify-between text-xs">
                   <span className="text-slate-600">Consultation Fee</span>
