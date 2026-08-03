@@ -3,6 +3,7 @@ ManMitra — Authentication & Profile Views
 All REST endpoints for auth, profile, and onboarding.
 """
 import logging
+import threading
 from typing import Any
 
 from django.contrib.auth import authenticate, get_user_model
@@ -92,22 +93,36 @@ The ManMitra Team
         """.strip()
 
         sent_via_email = False
-        try:
-            msg = EmailMultiAlternatives(
-                subject=subject,
-                body=text_body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[email],
-            )
-            msg.encoding = 'utf-8'
-            msg.send(fail_silently=False)
+        is_console_backend = 'console' in getattr(settings, 'EMAIL_BACKEND', '')
+        email_password = getattr(settings, 'EMAIL_HOST_PASSWORD', '')
+
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=text_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[email],
+        )
+        msg.encoding = 'utf-8'
+
+        if not is_console_backend and email_password and 'your_resend_api_key' not in email_password:
             sent_via_email = True
-            logger.info(f"OTP verification email sent to {email}")
-        except Exception as e:
-            logger.error(f"Failed to send OTP email to {email}: {e}")
+            def _send_otp_async():
+                try:
+                    msg.send(fail_silently=False)
+                    logger.info(f"OTP verification email sent async to {email}")
+                except Exception as e:
+                    logger.error(f"Failed to send OTP email async to {email}: {e}")
+
+            threading.Thread(target=_send_otp_async, daemon=True).start()
+        else:
+            try:
+                msg.send(fail_silently=True)
+            except Exception:
+                pass
+            logger.info(f"Console/dev backend active. Verification code generated for {email}: {otp_code}")
 
         resp_data = {
-            'message': f'Verification code sent to {email}!' if sent_via_email else 'Verification code generated! (Dev mode fallback code below)',
+            'message': f'Verification code sent to {email}!' if sent_via_email else 'Verification code generated! (Testing mode fallback below)',
             'expires_in_mins': 10,
             'sent_via_email': sent_via_email,
         }

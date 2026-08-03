@@ -3,6 +3,7 @@ ManMitra — Core Utilities
 Shared helper functions used across the entire application.
 """
 import logging
+import threading
 from django.core.signing import TimestampSigner
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
@@ -42,9 +43,18 @@ def _build_signed_token(email: str) -> str:
     return signer.sign(email)
 
 
+def _send_msg_async(msg, recipient_email: str, label: str = "email") -> None:
+    """Worker function to send an email in a background thread."""
+    try:
+        msg.send(fail_silently=False)
+        logger.info(f"{label.capitalize()} successfully sent async to {recipient_email}")
+    except Exception as e:
+        logger.error(f"Failed to send async {label} to {recipient_email}: {e}")
+
+
 def send_verification_email(user, request=None) -> None:
     """
-    Send the email verification link to the newly registered user.
+    Send the email verification link to the newly registered user asynchronously.
     Token expires in 24 hours (enforced in VerifyEmailView).
     """
     token = _build_signed_token(user.email)
@@ -67,24 +77,19 @@ With care,
 The ManMitra Team
     """.strip()
 
-    try:
-        msg = EmailMultiAlternatives(
-            subject=subject,
-            body=text_body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[user.email],
-        )
-        msg.encoding = 'utf-8'
-        msg.send(fail_silently=False)
-        logger.info(f'Verification email sent to: {user.email}')
-    except Exception as e:
-        logger.error(f'Failed to send verification email to {user.email}: {e}')
-        raise
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[user.email],
+    )
+    msg.encoding = 'utf-8'
+    threading.Thread(target=_send_msg_async, args=(msg, user.email, "verification email"), daemon=True).start()
 
 
 def send_password_reset_email(user, request=None) -> None:
     """
-    Send the password reset link to the user.
+    Send the password reset link to the user asynchronously.
     Token expires in 1 hour (enforced in PasswordResetConfirmView).
     """
     token = _build_signed_token(user.email)
@@ -107,17 +112,12 @@ With care,
 The ManMitra Team
     """.strip()
 
-    try:
-        msg = EmailMultiAlternatives(
-            subject=subject,
-            body=text_body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[user.email],
-        )
-        msg.encoding = 'utf-8'
-        msg.send(fail_silently=False)
-        logger.info(f'Password reset email sent to: {user.email}')
-    except Exception as e:
-        logger.error(f'Failed to send password reset email to {user.email}: {e}')
-        raise
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[user.email],
+    )
+    msg.encoding = 'utf-8'
+    threading.Thread(target=_send_msg_async, args=(msg, user.email, "password reset email"), daemon=True).start()
 

@@ -54,20 +54,23 @@ else:
 # ─────────────────────────────────────────────
 # Email — Production SMTP (Resend / AWS SES / Gmail)
 # ─────────────────────────────────────────────
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.resend.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-
-if EMAIL_PORT == 465:
-    EMAIL_USE_TLS = False
-    EMAIL_USE_SSL = True
-else:
-    EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-    EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
-
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='resend')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='ManMitra <onboarding@resend.dev>')
+EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=5, cast=int)
+
+if EMAIL_HOST_PASSWORD and 'your_resend_api_key' not in EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    if EMAIL_PORT == 465:
+        EMAIL_USE_TLS = False
+        EMAIL_USE_SSL = True
+    else:
+        EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+        EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 # ─────────────────────────────────────────────

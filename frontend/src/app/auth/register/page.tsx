@@ -276,6 +276,11 @@ export default function RegisterPage() {
                 <p className="text-[11px] text-slate-600">
                   Please check your inbox at <strong className="text-slate-800">{formData.email}</strong> and enter the 6-digit code.
                 </p>
+                {devCodeNotice && (
+                  <p className="text-[11px] text-amber-700 font-semibold pt-1 border-t border-sky-100">
+                    {devCodeNotice}
+                  </p>
+                )}
               </div>
 
               <div>

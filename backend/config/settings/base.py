@@ -230,6 +230,7 @@ SPECTACULAR_SETTINGS = {
 # ─────────────────────────────────────────────
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='ManMitra <noreply@manmitra.ai>')
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
+EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=5, cast=int)
 
 # ─────────────────────────────────────────────
 # Static & Media Files
