@@ -51,7 +51,7 @@ export default function LandingPage() {
       <AnimatePresence>
         {showSplash && (
           <WelcomeSplash
-            subtitle="Welcome to your personal mental wellness sanctuary..."
+            subtitle="Welcome to your personal mental wellness journey..."
             onDismiss={() => setShowSplash(false)}
           />
         )}
@@ -133,7 +133,7 @@ export default function LandingPage() {
             variants={itemVariants}
             className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-sky-200 bg-sky-50/80 text-xs font-semibold text-[#0284c7] mb-6 shadow-sm"
           >
-            <Sparkles className="w-3.5 h-3.5" /> Your Secure Mental Wellness Sanctuary
+            <Sparkles className="w-3.5 h-3.5" /> Your Secure Mental Wellness Journey
           </motion.div>
 
           {/* Main Hero Center Title: ManMitra */}
@@ -146,12 +146,12 @@ export default function LandingPage() {
             </span>
           </motion.h1>
 
-          {/* Subtitle: A Sanctuary for Your Mind */}
+          {/* Subtitle: Your Companion Anywhere, Anytime */}
           <motion.h2
             variants={itemVariants}
             className="text-2xl md:text-3xl font-bold text-slate-800 tracking-wide mb-6"
           >
-            A Sanctuary for Your Mind
+            Your Companion Anywhere, Anytime
           </motion.h2>
 
           {/* Description */}
@@ -174,7 +174,7 @@ export default function LandingPage() {
             </motion.div>
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} className="w-full sm:w-auto">
               <Link href="/auth/login" className="glass-panel w-full sm:w-auto px-8 py-4 rounded-full text-sm font-semibold text-slate-700 hover:border-sky-300 hover:bg-sky-50/50 transition-all flex items-center justify-center">
-                Enter Sanctuary
+                Enter Wellness Space
               </Link>
             </motion.div>
           </motion.div>

@@ -79,7 +79,7 @@ class SendEmailOTPView(APIView):
         text_body = f"""
 Hi,
 
-Welcome to ManMitra — Your Sanctuary for Mental Wellness!
+Welcome to ManMitra — Your Mental Wellness Journey!
 
 Your 6-digit verification code to create your account is:
 
@@ -162,7 +162,7 @@ class RegisterView(APIView):
         logger.info(f'New user registered with OTP verification: {user.email}')
         return Response(
             {
-                'message': 'Registration successful! Welcome to your sanctuary.',
+                'message': 'Registration successful! Welcome to your wellness space.',
                 'tokens': tokens,
                 'user': UserProfileSerializer(user, context={'request': request}).data,
             },

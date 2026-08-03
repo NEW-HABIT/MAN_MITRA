@@ -32,6 +32,7 @@ backend/venv/
 .env.example
 *.env
 backend/.env
+
 frontend/.env.local
 frontend/.env.production
 
@@ -61,3 +62,6 @@ README.md
 *.swo
 .DS_Store
 Thumbs.db
+
+
+backend\.env.example

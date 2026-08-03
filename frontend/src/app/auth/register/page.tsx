@@ -144,7 +144,7 @@ export default function RegisterPage() {
             ManMitra
           </Link>
           <h2 className="text-2xl font-bold text-slate-900">
-            {step === 'details' ? 'Create your sanctuary' : 'Verify your email'}
+            {step === 'details' ? 'Begin your wellness journey' : 'Verify your email'}
           </h2>
           <p className="text-xs text-slate-500 mt-1">
             {step === 'details' 
@@ -335,7 +335,7 @@ export default function RegisterPage() {
         </AnimatePresence>
 
         <div className="mt-6 text-center text-xs text-slate-500 pt-4 border-t border-slate-100">
-          Already have a sanctuary?{' '}
+          Already on your wellness journey?{' '}
           <Link href="/auth/login" className="text-[#0284c7] font-semibold hover:underline">
             Sign in
           </Link>

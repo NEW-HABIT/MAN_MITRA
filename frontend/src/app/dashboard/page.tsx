@@ -713,7 +713,7 @@ export default function DashboardPage() {
                   }`}
                 >
                   <User className="w-4 h-4" />
-                  My Sanctuary Profile
+                  My Wellness Profile
                 </button>
               </>
             ) : user.role === 'therapist' ? (
@@ -753,7 +753,7 @@ export default function DashboardPage() {
                   }`}
                 >
                   <LayoutDashboard className="w-4 h-4" />
-                  Sanctuary Home
+                  Wellness Dashboard
                 </button>
 
                 <button
@@ -853,7 +853,7 @@ export default function DashboardPage() {
             <div className="truncate text-left">
               <h5 className="text-xs font-bold truncate text-slate-800">{user.full_name}</h5>
               <span className="text-[10px] text-slate-500 capitalize tracking-wider flex items-center gap-1 font-semibold">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#0284c7]" /> {user.role === 'admin' ? 'Admin Operations' : user.role === 'therapist' ? 'Guide Care Team' : 'Personal Sanctuary'}
+                <ShieldCheck className="w-3.5 h-3.5 text-[#0284c7]" /> {user.role === 'admin' ? 'Admin Operations' : user.role === 'therapist' ? 'Guide Care Team' : 'Personal Wellness Space'}
               </span>
             </div>
           </div>
@@ -863,7 +863,7 @@ export default function DashboardPage() {
             className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-rose-100 hover:bg-rose-50/80 transition-all text-xs font-semibold text-rose-500 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
-            Leave Sanctuary
+            Sign Out
           </button>
         </div>
       </aside>
@@ -935,7 +935,7 @@ export default function DashboardPage() {
         <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto bg-sky-50/30">
           <AnimatePresence mode="wait">
             
-            {/* ── TAB: SANCTUARY DASHBOARD / DOCTOR WORKSPACE ───────────────── */}
+            {/* ── TAB: WELLNESS DASHBOARD / DOCTOR WORKSPACE ───────────────── */}
             {activeTab === 'dashboard' && (
               user.role === 'therapist' ? (
                 <DoctorWorkspace accessToken={accessToken!} doctorName={user.full_name} />

@@ -293,7 +293,7 @@ export default function AdminAnalyticsSuite({
           ))}
         </div>
         <div className="glass-panel p-6 rounded-3xl bg-white/60 border border-sky-100 h-40 flex items-center justify-center">
-          <div className="text-xs text-slate-400 font-semibold">Loading sanctuary platform metrics...</div>
+          <div className="text-xs text-slate-400 font-semibold">Loading wellness platform metrics...</div>
         </div>
       </div>
     );

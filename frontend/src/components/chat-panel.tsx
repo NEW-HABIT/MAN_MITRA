@@ -290,7 +290,7 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
                 {sessions.find(s => s.id === activeSessionId)?.title || "ManMitra Companion"}
               </h4>
               <span className="text-[9px] text-slate-500">
-                {status === 'connected' ? 'Connected and listening' : 'Connecting to sanctuary...'}
+                {status === 'connected' ? 'Connected and listening' : 'Connecting to wellness space...'}
               </span>
             </div>
           </div>

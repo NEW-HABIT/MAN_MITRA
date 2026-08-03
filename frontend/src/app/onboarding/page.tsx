@@ -115,7 +115,7 @@ export default function OnboardingPage() {
 
       router.push('/dashboard');
     } catch (e) {
-      alert(e || 'An error occurred during sanctuary setup.');
+      alert(e || 'An error occurred during wellness setup.');
     } finally {
       setLoading(false);
     }
@@ -292,8 +292,8 @@ export default function OnboardingPage() {
               className="space-y-6"
             >
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Sparkles className="text-[#0284c7] w-6 h-6" /> Sanctuary Preferences</h2>
-                <p className="text-xs text-slate-500 mt-1">Select the tools and goals you want to prioritize in your sanctuary.</p>
+                <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Sparkles className="text-[#0284c7] w-6 h-6" /> Wellness Preferences</h2>
+                <p className="text-xs text-slate-500 mt-1">Select the tools and goals you want to prioritize in your wellness journey.</p>
               </div>
 
               <div className="space-y-5">
@@ -357,7 +357,7 @@ export default function OnboardingPage() {
                   onClick={handleComplete}
                   className="flex-1 glow-btn py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  {loading ? 'Creating sanctuary...' : 'Create Sanctuary'}
+                  {loading ? 'Setting up wellness space...' : 'Start Wellness Journey'}
                   {!loading && <ShieldCheck className="w-4 h-4 text-white" />}
                 </button>
               </div>

@@ -75,14 +75,14 @@ function VerifyEmailContent() {
         <div className="py-6">
           <Loader2 className="w-12 h-12 text-[#0284c7] animate-spin mx-auto mb-4" />
           <h3 className="text-lg font-bold text-slate-900 mb-1">Verifying your account</h3>
-          <p className="text-xs text-slate-500">Preparing your sanctuary space...</p>
+          <p className="text-xs text-slate-500">Preparing your wellness space...</p>
         </div>
       )}
 
       {status === 'success' && (
         <div className="py-6">
           <CheckCircle2 className="w-12 h-12 text-[#0284c7] mx-auto mb-4 animate-bounce" />
-          <h3 className="text-lg font-bold text-slate-900 mb-1">Sanctuary Activated!</h3>
+          <h3 className="text-lg font-bold text-slate-900 mb-1">Wellness Account Activated!</h3>
           <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
             Your email address has been verified. Redirecting you to the onboarding planner...
           </p>

@@ -106,7 +106,7 @@ function ResetPasswordContent() {
         <p className="text-xs text-slate-500 mt-1">
           {requestMode 
             ? 'Enter your email to receive a secure password recovery link.' 
-            : 'Choose a strong, unique password for your sanctuary.'
+            : 'Choose a strong, unique password for your wellness account.'
           }
         </p>
       </div>
