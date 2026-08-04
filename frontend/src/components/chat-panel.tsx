@@ -286,11 +286,11 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
               status === 'connected' ? 'bg-[#0284c7] animate-pulse' : 'bg-rose-500'
             }`} />
             <div className="text-left">
-              <h4 className="text-xs font-bold font-outfit text-slate-900">
-                {sessions.find(s => s.id === activeSessionId)?.title || "ManMitra Companion"}
+              <h4 className="font-semibold font-outfit text-xs text-slate-800">
+                {sessions.find(s => s.id === activeSessionId)?.title || "ManMitra Caring Friend"}
               </h4>
               <span className="text-[9px] text-slate-500">
-                {status === 'connected' ? 'Connected and listening' : 'Connecting to wellness space...'}
+                {status === 'connected' ? 'Here for you, listening with warmth' : 'Connecting to your safe space...'}
               </span>
             </div>
           </div>
@@ -330,7 +330,7 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-center text-xs text-slate-500">
               <Sparkles className="w-8 h-8 text-[#0284c7] mb-3 opacity-60 animate-pulse" />
-              <span>Send a message below to start chatting with your ManMitra Companion.</span>
+              <span>I'm right here with you. Share how you're feeling today, and let's talk through it together.</span>
             </div>
           )}
         </div>
@@ -341,8 +341,7 @@ export default function ChatPanel({ accessToken }: ChatPanelProps) {
             type="text"
             disabled={!activeSessionId}
             className="flex-1 glass-input px-4 py-2.5 rounded-xl text-xs text-slate-800 disabled:opacity-50"
-            placeholder={status === 'connected' ? "Type your message to ManMitra..." : "Connecting to ManMitra..."}
-
+            placeholder={status === 'connected' ? "Share what's on your mind with your friend..." : "Connecting..."}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
           />

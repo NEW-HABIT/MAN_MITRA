@@ -75,13 +75,13 @@ export default function WellnessHub() {
   return (
     <div className="space-y-6 text-left pb-12">
       {/* Header Banner */}
-      <div className="glass-panel p-6 rounded-3xl bg-gradient-to-r from-[#0284c7] via-sky-800 to-indigo-900 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="p-6 rounded-3xl bg-slate-900 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-slate-800">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-sky-300 font-semibold text-xs uppercase tracking-wider">
-            <Sparkles className="w-4 h-4" /> Comprehensive Self-Care Hub
+          <div className="flex items-center gap-2 text-sky-400 font-bold text-xs uppercase tracking-wider">
+            <Sparkles className="w-4 h-4 text-sky-400" /> Comprehensive Self-Care Hub
           </div>
-          <h2 className="text-2xl font-bold font-outfit">Wellness & Relaxation Hub</h2>
-          <p className="text-xs text-sky-100/80 max-w-xl">
+          <h2 className="text-2xl font-extrabold font-outfit text-white">Wellness & Relaxation Hub</h2>
+          <p className="text-sm text-slate-300 font-normal max-w-xl leading-relaxed">
             Guided meditation, 4-7-8 breathing visualizer, ambient sleep sounds, yoga guides, daily affirmations, and mental health articles.
           </p>
         </div>

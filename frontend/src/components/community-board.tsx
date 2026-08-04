@@ -145,19 +145,19 @@ export default function CommunityBoard({ accessToken, userRole }: CommunityBoard
   return (
     <div className="space-y-6 text-left pb-12">
       {/* Header Banner */}
-      <div className="glass-panel p-6 rounded-3xl bg-gradient-to-r from-sky-900 via-indigo-900 to-slate-900 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="p-6 rounded-3xl bg-slate-900 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-slate-800">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-sky-400 font-semibold text-xs uppercase tracking-wider">
-            <Users className="w-4 h-4" /> Anonymous Peer Support Forum
+          <div className="flex items-center gap-2 text-sky-400 font-bold text-xs uppercase tracking-wider">
+            <Users className="w-4 h-4 text-sky-400" /> Anonymous Peer Support Forum
           </div>
-          <h2 className="text-2xl font-bold font-outfit">Community Discussions</h2>
-          <p className="text-xs text-sky-200/80 max-w-xl">
+          <h2 className="text-2xl font-extrabold font-outfit text-white">Community Discussions</h2>
+          <p className="text-sm text-slate-300 font-normal max-w-xl leading-relaxed">
             A safe, moderated space to share experiences, ask questions, and support peers on your mental health journey.
           </p>
         </div>
         <button
           onClick={() => setNewPostModal(true)}
-          className="px-5 py-3 rounded-2xl bg-[#0284c7] hover:bg-sky-600 text-white text-xs font-bold shadow-lg shadow-sky-500/30 flex items-center gap-2"
+          className="px-5 py-3 rounded-2xl bg-[#0284c7] hover:bg-sky-600 text-white text-xs font-bold shadow-lg shadow-sky-500/30 flex items-center gap-2 shrink-0"
         >
           <Plus className="w-4 h-4" /> Start Discussion
         </button>

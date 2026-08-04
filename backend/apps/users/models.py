@@ -236,6 +236,7 @@ class AssessmentSubmission(models.Model):
         GAD7 = 'GAD7', 'GAD-7 Anxiety'
         STRESS = 'STRESS', 'Stress Assessment'
         SLEEP = 'SLEEP', 'Sleep Assessment'
+        COMPREHENSIVE = 'COMPREHENSIVE', 'Comprehensive 360 Assessment'
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assessment_submissions')

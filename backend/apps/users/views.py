@@ -1613,6 +1613,20 @@ class AssessmentSubmissionView(APIView):
             else:
                 severity = 'Sleep Support & Nighttime Relaxation Recommended'
                 recs = ['Connect with a sleep & wellness guide', 'Practice nighttime wind-down breathing exercises']
+        elif assessment_type in ['ALL', 'COMPREHENSIVE']:
+            assessment_type = 'COMPREHENSIVE'
+            if score <= 15:
+                severity = 'High Vitality & Calm Well-Being'
+                recs = ['Maintain your excellent daily routines & sleep habits', 'Keep up your daily mood check-ins & journaling']
+            elif score <= 35:
+                severity = 'Gentle Rest & Self-Care Reflection'
+                recs = ['Engage in daily CBT thought reframing exercises', 'Practice 10 minutes of daily mindfulness & breathing']
+            elif score <= 55:
+                severity = 'Moderate Support & Guided Reflection'
+                recs = ['Schedule a session with a verified wellness guide', 'Practice structured CBT journaling and emotion tracking']
+            else:
+                severity = 'Warm Guided Care & Support Recommended'
+                recs = ['Prioritize a 1-on-1 session with a wellness specialist', 'Use crisis grounding exercises if feeling overwhelmed']
         else:
             severity = 'Moderate Risk' if score > 10 else 'Low Risk'
             recs = ['Maintain balanced sleep schedule', 'Utilize Wellness Hub relaxation audio']

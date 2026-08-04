@@ -56,6 +56,13 @@ const SLEEP_QUESTIONS = [
   "Struggled to maintain energy, focus, or stay awake during daytime activities"
 ];
 
+const ALL_QUESTIONS_STRUCTURED = [
+  ...PHQ9_QUESTIONS.map((text, idx) => ({ id: idx, text, category: 'Mood & Energy', code: 'PHQ9' })),
+  ...GAD7_QUESTIONS.map((text, idx) => ({ id: idx + 9, text, category: 'Calmness & Peace', code: 'GAD7' })),
+  ...STRESS_QUESTIONS.map((text, idx) => ({ id: idx + 16, text, category: 'Daily Stress', code: 'STRESS' })),
+  ...SLEEP_QUESTIONS.map((text, idx) => ({ id: idx + 26, text, category: 'Sleep Quality', code: 'SLEEP' })),
+];
+
 const FREQUENCY_OPTIONS = [
   { label: 'Not at all', value: 0 },
   { label: 'Several days', value: 1 },
@@ -64,7 +71,7 @@ const FREQUENCY_OPTIONS = [
 ];
 
 export default function AssessmentSuite({ accessToken, onNavigateTab }: AssessmentSuiteProps) {
-  const [activeType, setActiveType] = useState<'PHQ9' | 'GAD7' | 'STRESS' | 'SLEEP'>('PHQ9');
+  const [activeType, setActiveType] = useState<'ALL' | 'PHQ9' | 'GAD7' | 'STRESS' | 'SLEEP'>('ALL');
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<any | null>(null);
@@ -95,31 +102,34 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
 
   const getQuestionsForType = (type: string) => {
     switch (type) {
+      case 'ALL': return ALL_QUESTIONS_STRUCTURED.map(q => q.text);
       case 'PHQ9': return PHQ9_QUESTIONS;
       case 'GAD7': return GAD7_QUESTIONS;
       case 'STRESS': return STRESS_QUESTIONS;
       case 'SLEEP': return SLEEP_QUESTIONS;
-      default: return PHQ9_QUESTIONS;
+      default: return ALL_QUESTIONS_STRUCTURED.map(q => q.text);
     }
   };
 
   const getTitleForType = (type: string) => {
     switch (type) {
-      case 'PHQ9': return 'Mood & Energy Check-in (PHQ-9)';
-      case 'GAD7': return 'Calmness & Peace Check-in (GAD-7)';
-      case 'STRESS': return 'Daily Stress & Tension Check-in (PSS-10)';
-      case 'SLEEP': return 'Sleep Quality & Relaxation Check-in';
+      case 'ALL': return 'Complete Health & Wellness Check-in';
+      case 'PHQ9': return 'Mood & Energy Check-in';
+      case 'GAD7': return 'Calmness & Peace Check-in';
+      case 'STRESS': return 'Daily Stress Check-in';
+      case 'SLEEP': return 'Sleep Quality Check-in';
       default: return 'Self-Reflection Check-in';
     }
   };
 
   const getMaxScoreForType = (type: string) => {
     switch (type) {
+      case 'ALL': return 93;
       case 'PHQ9': return 27;
       case 'GAD7': return 21;
       case 'STRESS': return 30;
       case 'SLEEP': return 15;
-      default: return 27;
+      default: return 93;
     }
   };
 
@@ -152,7 +162,7 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
             'Authorization': `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
-            assessment_type: activeType,
+            assessment_type: activeType === 'ALL' ? 'COMPREHENSIVE' : activeType,
             score: rawScore,
             max_score: maxScore,
             answers: answers,
@@ -171,10 +181,15 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
     }
 
     // Local fallback calculation
-    let severity = 'Balanced & Steady';
+    let severity = 'Balanced & Steady Well-Being';
     let recommendations: string[] = ['Maintain healthy daily routines & sleep schedules', 'Practice 10 minutes of daily mindfulness'];
 
-    if (activeType === 'PHQ9') {
+    if (activeType === 'ALL') {
+      if (rawScore > 50) severity = 'Warm Guided Care & Support Recommended';
+      else if (rawScore > 30) severity = 'Moderate Support & Guided Reflection';
+      else if (rawScore > 15) severity = 'Gentle Rest & Self-Care Reflection';
+      else severity = 'High Vitality & Calm Well-Being';
+    } else if (activeType === 'PHQ9') {
       if (rawScore > 14) severity = 'Warm Guided Care Recommended';
       else if (rawScore > 9) severity = 'Extra Care & Support Recommended';
       else if (rawScore > 4) severity = 'Gentle Self-Care Reflection';
@@ -234,25 +249,33 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
   return (
     <div className="space-y-6 text-left pb-12">
       {/* Top Banner Header */}
-      <div className="glass-panel p-6 rounded-3xl bg-gradient-to-r from-sky-900 via-slate-900 to-sky-950 text-white shadow-xl space-y-4">
+      <div className="p-6 rounded-3xl bg-slate-900 text-white shadow-xl space-y-4 border border-slate-800">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-sky-400 font-semibold text-xs uppercase tracking-wider">
-              <Brain className="w-4 h-4" /> Guided Self-Reflection Check-ins
+            <div className="flex items-center gap-2 text-sky-400 font-bold text-xs uppercase tracking-wider">
+              <Brain className="w-4 h-4 text-sky-400" /> Guided Self-Reflection Check-ins
             </div>
-            <h2 className="text-2xl font-bold font-outfit">Emotional Well-Being Check-in</h2>
-            <p className="text-xs text-sky-200/80 max-w-xl">
-              Complete daily guided check-ins to measure mood, calm, stress, and sleep energy patterns. All your submissions are safely recorded every day.
+            <h2 className="text-2xl font-extrabold font-outfit text-white">Emotional Well-Being & Health Check-in</h2>
+            <p className="text-sm text-slate-300 font-normal max-w-xl leading-relaxed">
+              Take focused check-in categories or complete a full wellness assessment. All your check-in submissions are saved to your daily reflection history.
             </p>
           </div>
         </div>
 
-        {/* 4 Responsive Assessment Type Selector Tabs */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+        {/* 5 Assessment Type Selector Tabs */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2">
+          <button
+            onClick={() => { setActiveType('ALL'); handleReset(); }}
+            className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 ${
+              activeType === 'ALL' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30 ring-2 ring-purple-400' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" /> Complete Check-in
+          </button>
           <button
             onClick={() => { setActiveType('PHQ9'); handleReset(); }}
             className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 ${
-              activeType === 'PHQ9' ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30 ring-2 ring-sky-300' : 'bg-white/10 text-white hover:bg-white/20'
+              activeType === 'PHQ9' ? 'bg-[#0284c7] text-white shadow-lg shadow-sky-500/30 ring-2 ring-sky-400' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700'
             }`}
           >
             <Brain className="w-3.5 h-3.5" /> Mood & Energy
@@ -260,7 +283,7 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
           <button
             onClick={() => { setActiveType('GAD7'); handleReset(); }}
             className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 ${
-              activeType === 'GAD7' ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30 ring-2 ring-sky-300' : 'bg-white/10 text-white hover:bg-white/20'
+              activeType === 'GAD7' ? 'bg-[#0284c7] text-white shadow-lg shadow-sky-500/30 ring-2 ring-sky-400' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700'
             }`}
           >
             <HeartPulse className="w-3.5 h-3.5" /> Calmness & Peace
@@ -268,15 +291,15 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
           <button
             onClick={() => { setActiveType('STRESS'); handleReset(); }}
             className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 ${
-              activeType === 'STRESS' ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30 ring-2 ring-sky-300' : 'bg-white/10 text-white hover:bg-white/20'
+              activeType === 'STRESS' ? 'bg-[#0284c7] text-white shadow-lg shadow-sky-500/30 ring-2 ring-sky-400' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" /> Daily Stress
+            <Award className="w-3.5 h-3.5" /> Daily Stress
           </button>
           <button
             onClick={() => { setActiveType('SLEEP'); handleReset(); }}
             className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 ${
-              activeType === 'SLEEP' ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30 ring-2 ring-sky-300' : 'bg-white/10 text-white hover:bg-white/20'
+              activeType === 'SLEEP' ? 'bg-[#0284c7] text-white shadow-lg shadow-sky-500/30 ring-2 ring-sky-400' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700'
             }`}
           >
             <Clock className="w-3.5 h-3.5" /> Sleep Quality
@@ -311,31 +334,41 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
 
           {/* Question Items */}
           <div className="space-y-4">
-            {questions.map((qText, idx) => (
-              <div key={idx} className="p-4 rounded-2xl bg-slate-50/70 hover:bg-sky-50/30 border border-slate-100 transition-all space-y-3">
-                <div className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-sky-100 text-[#0284c7] text-xs font-bold flex items-center justify-center shrink-0">
-                    {idx + 1}
-                  </span>
-                  <h4 className="text-xs font-semibold text-slate-800 pt-0.5">{qText}</h4>
+            {questions.map((qText, idx) => {
+              const meta = activeType === 'ALL' ? ALL_QUESTIONS_STRUCTURED[idx] : null;
+              return (
+                <div key={idx} className="p-4 rounded-2xl bg-slate-50/70 hover:bg-sky-50/30 border border-slate-100 transition-all space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <span className="w-6 h-6 rounded-full bg-sky-100 text-[#0284c7] text-xs font-bold flex items-center justify-center shrink-0">
+                        {idx + 1}
+                      </span>
+                      <h4 className="text-xs font-semibold text-slate-800 pt-0.5">{qText}</h4>
+                    </div>
+                    {meta && (
+                      <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0">
+                        {meta.category}
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                    {FREQUENCY_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => handleSelectOption(idx, opt.value)}
+                        className={`p-2.5 rounded-xl text-xs font-medium border transition-all text-center ${
+                          answers[idx] === opt.value
+                            ? 'bg-[#0284c7] text-white border-[#0284c7] shadow-sm font-semibold'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-sky-300 hover:bg-white'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                  {FREQUENCY_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => handleSelectOption(idx, opt.value)}
-                      className={`p-2.5 rounded-xl text-xs font-medium border transition-all text-center ${
-                        answers[idx] === opt.value
-                          ? 'bg-[#0284c7] text-white border-[#0284c7] shadow-sm font-semibold'
-                          : 'bg-white text-slate-700 border-slate-200 hover:border-sky-300 hover:bg-white'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Submit Button */}

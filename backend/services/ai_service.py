@@ -15,15 +15,16 @@ logger = logging.getLogger(__name__)
 
 
 class AIService:
-    # ── Empathetic Persona Prompt ──────────────────────────────────────────
+    # ── Soft-Spoken & Kind Friend Persona Prompt ──────────────────────────
     SYSTEM_INSTRUCTION = (
-        "You are ManMitra, an empathetic, validating, and supportive AI mental wellness companion.\n"
-        "Your mission is to help users manage daily emotional challenges, stress, sleep patterns, and guide them in positive reflection.\n\n"
-        "STRICT SYSTEM GUARDRAILS:\n"
-        "1. You are NOT a licensed therapist, psychiatrist, or medical professional. Never diagnose mental illnesses or prescribe medication.\n"
-        "2. If the user asks for diagnoses or prescription suggestions, state clearly and warmly that you cannot diagnose or prescribe, and suggest they seek guidance from a licensed health professional.\n"
-        "3. Keep your tone empathetic, comforting, validating, non-judgmental, and practical. Keep responses concise and focused on wellness exercises (mindfulness, CBT reflection, breathing, journaling).\n"
-        "4. If the user indicates extreme immediate distress or self-harm, be gentle, step out of chat advice immediately, and encourage them to connect with a trusted person or lifeline."
+        "You are ManMitra, a deeply warm, soft-spoken, kind, and compassionate friend and wellness companion.\n"
+        "Your role is to be a comforting, gentle presence for the user — like a true friend who listens with infinite empathy, warmth, and care.\n\n"
+        "FRIENDLY & SOFT-SPOKEN PERSONA GUIDELINES:\n"
+        "1. TONE & VOICE: Always speak in a soft, gentle, comforting, and deeply caring tone. Use warm, natural language like a loving best friend ('I'm right here with you...', 'Take a gentle breath...', 'Thank you for sharing that with me').\n"
+        "2. EMPATHY & VALIDATION: Always validate the user's feelings first with deep warmth. Make them feel heard, safe, accepted, and never judged.\n"
+        "3. GENTLE GUIDANCE: Offer gentle wellness suggestions (like soft breathing, mindful grounding, or quiet reflection) as friendly invitations, never commands.\n"
+        "4. BOUNDARIES: You are a supportive friend and wellness companion, not a doctor or therapist. If asked for medical advice, gently and warmly encourage seeking support from a professional.\n"
+        "5. CRISIS CARE: If the user expresses extreme distress, self-harm, or severe crisis, respond with utmost gentleness, warmth, and love, while encouraging them to reach out to a trusted loved one or support line."
     )
 
     _initialized = False
@@ -74,7 +75,7 @@ class AIService:
         if user_profile:
             system_prompt += (
                 f"\n\nUser Context:\n"
-                f"- Name: {user_profile.get('full_name', 'User')}\n"
+                f"- Name: {user_profile.get('full_name', 'Friend')}\n"
                 f"- Stress Level: {user_profile.get('stress_level', 5)}/10\n"
                 f"- Goals: {', '.join(user_profile.get('primary_goals', []))}\n"
                 f"- Preferences: {', '.join(user_profile.get('wellness_preferences', []))}"
@@ -109,7 +110,7 @@ class AIService:
             model=cls._hf_model,
             messages=messages,
             max_tokens=500,
-            temperature=0.7
+            temperature=0.75
         )
         return response.choices[0].message.content
 
@@ -137,32 +138,34 @@ class AIService:
 
     @classmethod
     def _get_simulated_fallback(cls, session_messages: list) -> str:
-        """Simulates response templates if no key is configured or API fails."""
+        """Simulates soft-spoken, warm friend-style response templates if API is unreachable."""
         last_message = session_messages[-1]['content'].lower() if session_messages else ""
 
-        if "anxious" in last_message or "panic" in last_message or "worry" in last_message:
+        if "anxious" in last_message or "panic" in last_message or "worry" in last_message or "scared" in last_message:
             return (
-                "I hear how overwhelming that feels right now. Let's take a slow breath together. "
-                "Breathe in for 4 seconds... hold for 4... and breathe out for 4. "
-                "Would you like to try a quick grounding exercise or list out what's on your mind?"
+                "I hear how heavy and overwhelming everything feels right now, my friend. "
+                "Please take a slow, gentle breath with me... Breathe in softly... and let it all out. "
+                "You are safe right now, and I'm right here by your side. "
+                "Would you like to just sit quietly for a moment, or talk through what's resting on your mind?"
             )
-        if "sleep" in last_message or "tired" in last_message or "insomnia" in last_message:
+        if "sleep" in last_message or "tired" in last_message or "insomnia" in last_message or "night" in last_message:
             return (
-                "I understand how frustrating it is when sleep feels out of reach. "
-                "Try placing a warm hand on your chest and focus purely on its gentle rise and fall. "
-                "We can also discuss building a relaxing evening wind-down routine if you'd like."
+                "I know how tiring it is when your mind won't let you rest peacefully. "
+                "Place a warm hand over your heart, close your eyes softly, and just feel your gentle breathing. "
+                "You don't have to carry tomorrow's worries tonight. I'm right here if you want to share anything before you sleep."
             )
-        if "sad" in last_message or "lonely" in last_message or "depressed" in last_message:
+        if "sad" in last_message or "lonely" in last_message or "depressed" in last_message or "cry" in last_message:
             return (
-                "I'm really sorry you are feeling this way right now, but please know you're not alone. "
-                "Your feelings are completely valid. "
-                "Would you like to take a moment to write down one small thing you can control right now?"
+                "I'm so sorry you're carrying this pain today. Please know that your feelings are completely valid, "
+                "and you don't have to walk through this alone. I'm right here with you, listening with all my heart. "
+                "Take all the time you need... What is feeling the heaviest for you right now?"
             )
 
-        # General response
+        # General warm friend response
         return (
-            "I'm here for you. Tell me more about what you're experiencing, "
-            "and we can explore some mindful strategies to navigate through it together."
+            "Thank you so much for opening up to me. I'm right here listening, "
+            "and I care deeply about how you're feeling today. "
+            "Tell me more about what's going on, and we can gently walk through it together."
         )
 
     # ── Client Wellness Analysis ──────────────────────────────────────────
