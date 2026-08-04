@@ -36,6 +36,7 @@ from .views import (
     CommunityPostLikeView,
     PlatformNotificationView,
     WellnessResourceView,
+    ClientAnalysisView,
 )
 
 app_name = 'users'
@@ -75,6 +76,7 @@ urlpatterns = [
     # ── Specialist / Therapist Portal ───────────────────────────────────────
     path('doctors/public/', PublicDoctorListView.as_view(), name='doctors-public'),
     path('therapist/patients/', TherapistPatientsView.as_view(), name='therapist-patients'),
+    path('therapist/patients/<uuid:client_id>/analysis/', ClientAnalysisView.as_view(), name='client-analysis'),
     path('therapist/schedule/', TherapistScheduleView.as_view(), name='therapist-schedule'),
     path('treatment-plans/', TreatmentPlanView.as_view(), name='treatment-plans'),
 

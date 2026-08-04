@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Stethoscope, Users, Calendar, Clock, Activity, Video, FileText, CheckCircle2,
   AlertTriangle, Heart, User, Sparkles, X, ChevronRight, MessageSquare, Plus, Save,
-  Pill, Download, Phone, ShieldAlert, Check, RefreshCw
+  Pill, Download, Phone, ShieldAlert, Check, RefreshCw, Brain, TrendingUp, Zap, Info
 } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import { API_URL } from '@/config';
@@ -30,6 +30,37 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
   const [careNoteInput, setCareNoteInput] = useState('');
   const [medicationInput, setMedicationInput] = useState('Sertraline 50mg (Morning)');
   const [treatmentSaved, setTreatmentSaved] = useState(false);
+
+  // AI Client Analysis state
+  const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
+  const [analyzingPatient, setAnalyzingPatient] = useState<any | null>(null);
+  const [analysisData, setAnalysisData] = useState<any | null>(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisError, setAnalysisError] = useState('');
+
+  const handleFetchAIAnalysis = async (patient: any) => {
+    setAnalyzingPatient(patient);
+    setAnalysisModalOpen(true);
+    setAnalysisLoading(true);
+    setAnalysisError('');
+    setAnalysisData(null);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/therapist/patients/${patient.id}/analysis/`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAnalysisData(data);
+      } else {
+        const err = await res.json();
+        setAnalysisError(err.error || 'Failed to generate wellness analysis.');
+      }
+    } catch (e) {
+      setAnalysisError('Network error while analyzing patient interactions.');
+    } finally {
+      setAnalysisLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchDoctorData();
@@ -221,7 +252,7 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Recent Mood Telemetry</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Recent Mood History</span>
                   <div className="h-16 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={p.mood_history || []}>
@@ -237,7 +268,13 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 flex gap-2">
+              <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
+                <button
+                  onClick={() => handleFetchAIAnalysis(p)}
+                  className="w-full py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                >
+                  <Brain className="w-3.5 h-3.5" /> AI Condition Analysis
+                </button>
                 <button
                   onClick={() => handleOpenPatientDrawer(p)}
                   className="w-full py-2 rounded-xl bg-sky-50 text-[#0284c7] hover:bg-sky-100 text-xs font-bold"
@@ -261,7 +298,7 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
                   <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
                     <Clock className="w-4 h-4 text-[#0284c7]" /> {item.time_slot}
                   </div>
-                  <div className="text-xs text-slate-600 font-medium">Patient: {item.client_name} ({item.client_email})</div>
+                  <div className="text-xs text-[#475569] font-medium">Patient: {item.client_name} ({item.client_email})</div>
                   <div className="text-[11px] text-slate-400">{item.session_type} • {item.meeting_type}</div>
                 </div>
 
@@ -334,6 +371,13 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
             </div>
 
             <div className="space-y-3 border-t border-slate-100 pt-3">
+              <button
+                onClick={() => handleFetchAIAnalysis(selectedPatient)}
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
+              >
+                <Brain className="w-4 h-4" /> Run AI Wellness Analysis
+              </button>
+
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Clinical Diagnosis</label>
                 <input
@@ -383,6 +427,226 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
           </motion.div>
         </div>
       )}
+
+      {/* AI Client Wellness Condition Analysis Modal */}
+      {analysisModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-md flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-3xl p-6 max-w-2xl w-full space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+          >
+            <button
+              onClick={() => setAnalysisModalOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition-all"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Modal Header */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-700 border border-purple-200 flex items-center justify-center">
+                <Brain className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-bold font-outfit text-slate-900">
+                    AI Wellness Condition Analysis
+                  </h3>
+                  <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full font-bold">
+                    AI Assisted Insights
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Comprehensive analysis of conversations, mood logs, journal entries, health check-ins, and wellness routines for{' '}
+                  <span className="font-semibold text-slate-700">{analyzingPatient?.full_name}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Loading State */}
+            {analysisLoading && (
+              <div className="py-12 flex flex-col items-center justify-center space-y-3">
+                <RefreshCw className="w-8 h-8 text-purple-600 animate-spin" />
+                <p className="text-xs font-bold text-slate-600">
+                  Analyzing patient activity and wellness progress...
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  Gathering insights from mood trends, conversations, journal entries, health assessments, routine completion, and care notes
+                </p>
+              </div>
+            )}
+
+            {/* Error State */}
+            {analysisError && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700 font-medium flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                <span>{analysisError}</span>
+              </div>
+            )}
+
+            {/* Analysis Result */}
+            {analysisData && !analysisLoading && (
+              <div className="space-y-4 border-t border-slate-100 pt-4">
+                {/* Condition & Risk Header Bar */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* Overall Condition */}
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-slate-400">Overall Condition</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-bold px-3 py-1 rounded-xl ${
+                        analysisData.overall_condition === 'Critical' ? 'bg-red-100 text-red-700 border border-red-200' :
+                        analysisData.overall_condition === 'Needs Attention' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                        analysisData.overall_condition === 'Improving' ? 'bg-sky-100 text-sky-800 border border-sky-200' :
+                        'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                      }`}>
+                        ● {analysisData.overall_condition}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Risk Level */}
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-slate-400">Clinical Risk Level</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-bold px-3 py-1 rounded-xl ${
+                        analysisData.risk_level === 'High' ? 'bg-red-500 text-white' :
+                        analysisData.risk_level === 'Medium' ? 'bg-amber-500 text-white' :
+                        'bg-emerald-600 text-white'
+                      }`}>
+                        {analysisData.risk_level} Risk
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Confidence Score */}
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-slate-400">Data Completeness</span>
+                    <div className="text-sm font-bold text-slate-800">
+                      {analysisData.confidence_score}% <span className="text-[10px] text-slate-400 font-normal">(Based on activity history)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detailed AI Narrative Summary */}
+                <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-100 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-purple-900">
+                    <Sparkles className="w-4 h-4 text-purple-600" /> AI Wellness Assessment Summary
+                  </div>
+                  <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                    {analysisData.detailed_summary}
+                  </p>
+                </div>
+
+                {/* Key Concerns & Positive Indicators */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Concerns */}
+                  <div className="p-4 rounded-2xl bg-red-50/50 border border-red-100 space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-red-800">
+                      <AlertTriangle className="w-4 h-4 text-red-600" /> Key Clinical Concerns
+                    </div>
+                    <ul className="space-y-1.5 text-xs text-slate-700">
+                      {analysisData.key_concerns?.map((c: string, idx: number) => (
+                        <li key={idx} className="flex items-start gap-1.5">
+                          <span className="text-red-500 font-bold">•</span>
+                          <span>{c}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Positive Indicators */}
+                  <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100 space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Positive Progress Indicators
+                    </div>
+                    <ul className="space-y-1.5 text-xs text-slate-700">
+                      {analysisData.positive_indicators?.map((p: string, idx: number) => (
+                        <li key={idx} className="flex items-start gap-1.5">
+                          <span className="text-emerald-500 font-bold">•</span>
+                          <span>{p}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Recommended Clinical Actions */}
+                <div className="p-4 rounded-2xl bg-sky-50/60 border border-sky-100 space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#0284c7]">
+                    <Zap className="w-4 h-4 text-[#0284c7]" /> Recommended Next Actions for Specialist
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {analysisData.recommended_actions?.map((act: string, idx: number) => (
+                      <div key={idx} className="p-2.5 bg-white rounded-xl border border-sky-100 text-xs font-medium text-slate-800 flex items-start gap-2 shadow-2xs">
+                        <span className="bg-sky-100 text-[#0284c7] font-bold text-[10px] w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                          {idx + 1}
+                        </span>
+                        <span>{act}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Telemetry Snapshot Breakdown */}
+                {analysisData.data_snapshot && (
+                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-[11px] space-y-2">
+                    <span className="font-bold text-slate-600 block uppercase">Activity & Health Summary</span>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-slate-600">
+                      <div className="p-2 bg-white rounded-xl border border-slate-100">
+                        <span className="text-[10px] text-slate-400 block font-bold">Avg Mood Score</span>
+                        <span className="font-bold text-slate-800">
+                          {analysisData.data_snapshot.mood?.avg_score ? `${analysisData.data_snapshot.mood.avg_score}/10` : 'No logs'}
+                        </span>
+                      </div>
+                      <div className="p-2 bg-white rounded-xl border border-slate-100">
+                        <span className="text-[10px] text-slate-400 block font-bold">Chat Sessions</span>
+                        <span className="font-bold text-slate-800">
+                          {analysisData.data_snapshot.chat?.total_sessions || 0} ({analysisData.data_snapshot.chat?.crisis_messages || 0} crisis flags)
+                        </span>
+                      </div>
+                      <div className="p-2 bg-white rounded-xl border border-slate-100">
+                        <span className="text-[10px] text-slate-400 block font-bold">Journal Sentiment</span>
+                        <span className="font-bold text-slate-800">
+                          {analysisData.data_snapshot.journal?.avg_sentiment ?? 'N/A'}
+                        </span>
+                      </div>
+                      <div className="p-2 bg-white rounded-xl border border-slate-100">
+                        <span className="text-[10px] text-slate-400 block font-bold">Routine Completion</span>
+                        <span className="font-bold text-slate-800">
+                          {analysisData.data_snapshot.wellness?.completion_rate}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Disclaimer */}
+                <div className="text-[10px] text-slate-400 text-center flex items-center justify-center gap-1 pt-1">
+                  <Info className="w-3 h-3" /> AI-assisted evaluation based on patient activity. For guidance only, not a medical diagnosis.
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 justify-end pt-2 border-t border-slate-100">
+                  <button
+                    onClick={() => handleFetchAIAnalysis(analyzingPatient)}
+                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" /> Re-run Analysis
+                  </button>
+                  <button
+                    onClick={() => setAnalysisModalOpen(false)}
+                    className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
+

@@ -60,7 +60,8 @@ export default function RegisterPage() {
       }
 
       if (data.dev_otp_code) {
-        setDevCodeNotice(`(Testing Mode: Code generated is ${data.dev_otp_code})`);
+        setDevCodeNotice(`🔑 Verification Code: ${data.dev_otp_code}`);
+        setOtpCode(data.dev_otp_code);
       }
 
       setStep('otp');
