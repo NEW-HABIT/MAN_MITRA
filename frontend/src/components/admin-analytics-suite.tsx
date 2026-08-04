@@ -549,21 +549,27 @@ export default function AdminAnalyticsSuite({
           <div className="glass-panel p-6 rounded-3xl bg-white border border-rose-100 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-base font-bold text-slate-900 font-outfit flex items-center gap-2">
-                  <ShieldAlert className="w-5 h-5 text-rose-600" /> Urgent Safety & Risk Alerts Monitor
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-slate-900 font-outfit flex items-center gap-2">
+                    <ShieldAlert className="w-5 h-5 text-rose-600" /> Urgent Safety & Risk Alerts Monitor
+                  </h3>
+                  <span className="flex items-center gap-1.5 text-[10px] bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full font-bold">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                    Real-Time Safety Monitor Active
+                  </span>
+                </div>
                 <p className="text-xs text-slate-500 mt-0.5">Real-time emergency tracking for high-risk patient assessments and distress triggers.</p>
               </div>
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1.5 self-start sm:self-auto">
-                <AlertTriangle className="w-3.5 h-3.5" /> 0 Critical Emergency Escalations
+                <AlertTriangle className="w-3.5 h-3.5" /> {stats.emergency_alerts?.length || 0} Safety Alerts Monitored
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 space-y-1">
-                <span className="text-xs text-emerald-800 font-semibold">Active Crisis Monitoring</span>
-                <div className="text-2xl font-bold text-emerald-900">0 High-Risk Alerts</div>
-                <p className="text-[11px] text-emerald-700">All registered members are evaluated as low risk.</p>
+              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100 space-y-1">
+                <span className="text-xs text-rose-800 font-semibold">High-Risk Patients</span>
+                <div className="text-2xl font-bold text-rose-900">{stats.high_risk_patients || stats.emergency_alerts?.filter((a: any) => a.risk_level?.includes('High')).length || 0} High-Risk</div>
+                <p className="text-[11px] text-rose-700">Require clinical follow-up or check-in.</p>
               </div>
 
               <div className="p-4 rounded-2xl bg-sky-50 border border-sky-100 space-y-1">
@@ -581,32 +587,59 @@ export default function AdminAnalyticsSuite({
 
             {/* Risk Log Table */}
             <div className="pt-4 space-y-3">
-              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Patient Safety Assessment Logs</h4>
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Live Patient Safety Assessment Logs</h4>
               <div className="overflow-x-auto rounded-2xl border border-slate-100">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px]">
                     <tr>
                       <th className="p-3 font-semibold">Patient Account</th>
+                      <th className="p-3 font-semibold">Alert Indicator</th>
                       <th className="p-3 font-semibold">Risk Level</th>
-                      <th className="p-3 font-semibold">Assessment Score</th>
+                      <th className="p-3 font-semibold">Event Details</th>
                       <th className="p-3 font-semibold">Timestamp</th>
                       <th className="p-3 font-semibold text-right">Action Triage</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700">
-                    <tr className="hover:bg-slate-50/50">
-                      <td className="p-3 font-bold text-slate-900">Aarav Sharma</td>
-                      <td className="p-3">
-                        <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Minimal Risk (PHQ-9)
-                        </span>
-                      </td>
-                      <td className="p-3 font-semibold text-slate-800">3 / 27 (Minimal)</td>
-                      <td className="p-3 text-slate-500">Today, 14:30 IST</td>
-                      <td className="p-3 text-right">
-                        <span className="text-[11px] font-bold text-emerald-600">Routine Monitoring</span>
-                      </td>
-                    </tr>
+                    {stats.emergency_alerts && stats.emergency_alerts.length > 0 ? (
+                      stats.emergency_alerts.map((alert: any, idx: number) => (
+                        <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="p-3 font-bold text-slate-900">
+                            {alert.user_name || alert.user_anonymized || 'Member'}
+                          </td>
+                          <td className="p-3 font-medium text-slate-800">
+                            {alert.type}
+                          </td>
+                          <td className="p-3">
+                            <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold ${
+                              alert.risk_level?.includes('High') ? 'bg-red-100 text-red-800 border border-red-200' :
+                              'bg-amber-50 text-amber-800 border border-amber-200'
+                            }`}>
+                              {alert.risk_level}
+                            </span>
+                          </td>
+                          <td className="p-3 text-slate-600 text-[11px] max-w-xs truncate">
+                            {alert.details || 'Monitored patient health telemetry.'}
+                          </td>
+                          <td className="p-3 text-slate-500 whitespace-nowrap">
+                            {alert.timestamp}
+                          </td>
+                          <td className="p-3 text-right">
+                            <span className={`text-[11px] font-bold ${
+                              alert.triage_status === 'Resolved' ? 'text-emerald-600' : 'text-rose-600'
+                            }`}>
+                              {alert.triage_status || 'Monitored'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-slate-400 text-xs font-semibold">
+                          No active safety risk alerts. All registered members are evaluated as low risk.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -649,37 +682,82 @@ export default function AdminAnalyticsSuite({
       {activeSubTab === 'platform_audit' && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 text-left">
           <div className="glass-panel p-6 rounded-3xl bg-white border border-sky-100 shadow-sm space-y-4">
-            <h3 className="text-base font-bold text-slate-900 font-outfit flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-emerald-600" /> Platform Security & Access Audit Logs
-            </h3>
-            <p className="text-xs text-slate-500">Immutable security logs for admin actions, password resets, and role modifications.</p>
-            
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-slate-900 font-outfit flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-emerald-600" /> Platform Security & Access Activity Log
+                  </h3>
+                  <span className="flex items-center gap-1.5 text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    LIVE Auto-Sync Active
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">Real-time audit log capturing account registrations, check-ins, clinical assessments, and safety alerts.</p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleExportReport('excel', 'Security Activity Log')}
+                  className="px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export Log (.XLS)
+                </button>
+              </div>
+            </div>
+
+            {/* Real-time Audit Logs Table */}
             <div className="overflow-x-auto rounded-2xl border border-slate-100">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px]">
                   <tr>
+                    <th className="p-3 font-semibold">Timestamp</th>
                     <th className="p-3 font-semibold">Event Action</th>
-                    <th className="p-3 font-semibold">Admin Account</th>
-                    <th className="p-3 font-semibold">Target User</th>
+                    <th className="p-3 font-semibold">User / Account</th>
+                    <th className="p-3 font-semibold">Event Type</th>
                     <th className="p-3 font-semibold">Status</th>
-                    <th className="p-3 font-semibold text-right">Timestamp</th>
+                    <th className="p-3 font-semibold">Activity Details</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                  <tr className="hover:bg-slate-50/50">
-                    <td className="p-3 font-bold text-slate-900">User Details Updated</td>
-                    <td className="p-3 text-slate-600">admin@manmitra.ai</td>
-                    <td className="p-3 font-semibold text-slate-800">Aarav Sharma</td>
-                    <td className="p-3"><span className="text-emerald-600 font-bold">Success 200</span></td>
-                    <td className="p-3 text-right text-slate-500">Just Now</td>
-                  </tr>
-                  <tr className="hover:bg-slate-50/50">
-                    <td className="p-3 font-bold text-slate-900">Admin Authentication</td>
-                    <td className="p-3 text-slate-600">admin@manmitra.ai</td>
-                    <td className="p-3 font-semibold text-slate-800">System API</td>
-                    <td className="p-3"><span className="text-emerald-600 font-bold">Success 200</span></td>
-                    <td className="p-3 text-right text-slate-500">Today, 14:00 IST</td>
-                  </tr>
+                  {stats.audit_logs && stats.audit_logs.length > 0 ? (
+                    stats.audit_logs.map((log: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="p-3 text-slate-500 font-mono text-[11px] whitespace-nowrap">
+                          {log.timestamp}
+                        </td>
+                        <td className="p-3 font-bold text-slate-900">
+                          {log.action}
+                        </td>
+                        <td className="p-3 font-semibold text-slate-800">
+                          {log.user} <span className="text-[10px] text-slate-400 font-normal">({log.role})</span>
+                        </td>
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            log.type === 'security' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
+                            log.type === 'clinical' ? 'bg-sky-50 text-sky-700 border border-sky-200' :
+                            'bg-slate-100 text-slate-700'
+                          }`}>
+                            {log.type === 'security' ? '🛡️ Security' : log.type === 'clinical' ? '🩺 Clinical' : '👤 Activity'}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            {log.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-slate-600 text-[11px] max-w-xs truncate">
+                          {log.details}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-slate-400 text-xs font-semibold">
+                        No activity events recorded yet.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

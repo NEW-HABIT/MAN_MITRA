@@ -333,26 +333,50 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
       {/* Tab 3: Crisis Management Alerts */}
       {activeTab === 'crisis' && (
         <div className="glass-panel p-6 rounded-3xl bg-white border border-red-100 shadow-sm space-y-4">
-          <div className="flex items-center gap-2 text-red-600 font-bold text-base">
-            <ShieldAlert className="w-5 h-5" /> Urgent Crisis Alerts Protocol
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-red-600 font-bold text-base">
+              <ShieldAlert className="w-5 h-5" /> Urgent Safety & Crisis Alerts Protocol
+            </div>
+            <span className="flex items-center gap-1.5 text-[10px] bg-red-50 text-red-700 border border-red-200 px-2.5 py-0.5 rounded-full font-bold">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+              Live Safety Monitoring
+            </span>
           </div>
-          <p className="text-xs text-slate-500">Real-time alerts triggered by severe depression, suicide risk indicators, or panic attack reports.</p>
+          <p className="text-xs text-slate-500">Real-time alerts triggered by high stress levels (7+/10), severe depression/anxiety scores, or crisis flags.</p>
 
-          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-red-800">Severe Depression Risk Flag</span>
-              <span className="text-[10px] bg-red-200 text-red-900 font-bold px-2 py-0.5 rounded-full">High Severity</span>
+          {patients.filter(p => p.stress_level >= 7 || p.risk_status === 'High Risk').length > 0 ? (
+            patients.filter(p => p.stress_level >= 7 || p.risk_status === 'High Risk').map((patient) => (
+              <div key={patient.id} className="p-4 rounded-2xl bg-red-50/80 border border-red-200 space-y-3 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-red-900">{patient.full_name} ({patient.email})</span>
+                    <span className="text-[10px] bg-red-200 text-red-900 font-bold px-2 py-0.5 rounded-full">
+                      Stress Level {patient.stress_level}/10
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-red-700 font-bold">High Severity Alert</span>
+                </div>
+                <p className="text-xs text-slate-700 font-medium">
+                  Patient requires priority outreach. Self-reported elevated stress ({patient.stress_level}/10) with active care notes: "{patient.care_notes || 'High stress indicator'}".
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => setNotice(`Initiating priority call to ${patient.full_name}...`)} className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                    <Phone className="w-3.5 h-3.5" /> Call Patient Directly
+                  </button>
+                  <button onClick={() => handleFetchAIAnalysis(patient)} className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                    <Brain className="w-3.5 h-3.5" /> Run AI Condition Analysis
+                  </button>
+                  <button onClick={() => setNotice(`Emergency care protocol escalated for ${patient.full_name}.`)} className="px-4 py-2 rounded-xl bg-white border border-red-200 text-red-700 hover:bg-red-50 text-xs font-bold cursor-pointer">
+                    Escalate Emergency Protocol
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-6 text-center text-slate-400 text-xs font-semibold bg-slate-50 rounded-2xl border border-slate-100">
+              No high-risk emergency flags detected among assigned patients. All patients are currently evaluated as stable.
             </div>
-            <p className="text-xs text-slate-700">Patient reported PHQ-9 score above 20 with suicide risk indicators. Immediate clinical outreach recommended.</p>
-            <div className="flex gap-2">
-              <button onClick={() => setNotice('Contacting patient priority line...')} className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-bold flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5" /> Immediate Call Patient
-              </button>
-              <button onClick={() => setNotice('Emergency care protocol escalated to helpline.')} className="px-4 py-2 rounded-xl bg-white border border-red-200 text-red-700 text-xs font-bold">
-                Escalate Emergency Protocol
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       )}
 

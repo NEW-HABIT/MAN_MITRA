@@ -834,19 +834,71 @@ class AdminDashboardView(APIView):
             {'emotion': 'Overwhelmed (1-3)', 'value': round((overwhelmed_cnt / total_mood_logs_cnt) * 100, 1), 'color': '#ef4444'},
         ]
 
-        # Real Emergency Crisis Feed derived strictly from real DB records with high stress
-        high_risk_profiles = WellnessProfile.objects.filter(stress_level__gte=7).select_related('user')[:10]
+        # Real Emergency Crisis Feed derived strictly from DB models (CrisisReport, AssessmentSubmission, MoodLog, WellnessProfile)
         emergency_alerts = []
-        for idx, prof in enumerate(high_risk_profiles):
+
+        # 1. Real Crisis Reports
+        for cr in CrisisReport.objects.select_related('user').order_by('-flagged_at')[:10]:
             emergency_alerts.append({
-                'id': f'ALERT-{1000 + idx}',
-                'type': 'High Stress & Anxiety Indicator',
-                'user_anonymized': f'Member ({prof.user.full_name})',
-                'risk_level': f'Stress Level {prof.stress_level}/10',
-                'timestamp': prof.updated_at.strftime('%b %d, %H:%M'),
-                'status': 'Monitored',
-                'assigned_doctor': 'Dr. Sarah Smith' if User.objects.filter(role=User.Role.THERAPIST).exists() else 'Unassigned',
+                'id': str(cr.id),
+                'user_name': cr.user.full_name,
+                'user_email': cr.user.email,
+                'risk_level': 'High Risk' if cr.severity in ['high', 'critical'] else 'Moderate Risk',
+                'severity_raw': cr.severity,
+                'type': 'Crisis Incident Flagged',
+                'details': f'Triggers: {", ".join(cr.trigger_keywords or ["distress"]) if cr.trigger_keywords else "Distress keywords detected"}. Status: {"Resolved" if cr.resolved else "Active Unresolved"}',
+                'timestamp': cr.flagged_at.strftime('%b %d, %H:%M'),
+                'resolved': cr.resolved,
+                'triage_status': 'Resolved' if cr.resolved else 'Immediate Action Required',
             })
+
+        # 2. Severe Clinical Assessments (PHQ-9 / GAD-7)
+        for sub in AssessmentSubmission.objects.filter(Q(severity_level__icontains='severe') | Q(severity_level__icontains='moderate')).select_related('user').order_by('-created_at')[:10]:
+            emergency_alerts.append({
+                'id': str(sub.id),
+                'user_name': sub.user.full_name,
+                'user_email': sub.user.email,
+                'risk_level': 'High Risk' if 'severe' in sub.severity_level.lower() else 'Moderate Risk',
+                'severity_raw': 'high' if 'severe' in sub.severity_level.lower() else 'medium',
+                'type': f'{sub.assessment_type} {sub.severity_level}',
+                'details': f'{sub.assessment_type} Assessment scored {sub.score}/{sub.max_score} ({sub.severity_level}). Clinical review advised.',
+                'timestamp': sub.created_at.strftime('%b %d, %H:%M'),
+                'resolved': False,
+                'triage_status': 'Clinical Outreach',
+            })
+
+        # 3. Very Low Mood Logs (score <= 3)
+        for ml in MoodLog.objects.filter(mood_score__lte=3).select_related('user').order_by('-logged_at')[:10]:
+            emergency_alerts.append({
+                'id': str(ml.id),
+                'user_name': ml.user.full_name,
+                'user_email': ml.user.email,
+                'risk_level': 'Moderate Risk',
+                'severity_raw': 'medium',
+                'type': f'Low Mood Check-In ({ml.mood_score}/10)',
+                'details': f'Logged emotion "{ml.mood_label}" with low intensity score {ml.mood_score}/10. Note: "{ml.note[:60] if ml.note else "None"}".',
+                'timestamp': ml.logged_at.strftime('%b %d, %H:%M'),
+                'resolved': False,
+                'triage_status': 'Routine Monitoring',
+            })
+
+        # 4. High Stress Profiles (stress_level >= 7)
+        for prof in WellnessProfile.objects.filter(stress_level__gte=7).select_related('user').order_by('-updated_at')[:10]:
+            emergency_alerts.append({
+                'id': str(prof.id),
+                'user_name': prof.user.full_name,
+                'user_email': prof.user.email,
+                'risk_level': 'High Risk' if prof.stress_level >= 8 else 'Moderate Risk',
+                'severity_raw': 'high' if prof.stress_level >= 8 else 'medium',
+                'type': f'High Stress Profile ({prof.stress_level}/10)',
+                'details': f'User self-reported stress level {prof.stress_level}/10 during wellness profile setup.',
+                'timestamp': prof.updated_at.strftime('%b %d, %H:%M'),
+                'resolved': False,
+                'triage_status': 'Follow-Up Needed',
+            })
+
+        # Sort emergency alerts by high risk first
+        emergency_alerts.sort(key=lambda x: (0 if 'High' in x['risk_level'] else 1))
 
         # Real Clinical Score Distributions (PHQ-9 & GAD-7) computed directly from WellnessProfile DB records
         tot_profiles = max(WellnessProfile.objects.count(), 1)
@@ -884,16 +936,109 @@ class AdminDashboardView(APIView):
             {'id': 'CBT-103', 'title': 'Sleep Hygiene & Bedtime Restructuring', 'category': 'Behavioral Therapy', 'completion_rate': '100%', 'status': 'Active'},
         ]
 
-        # Audit Logs computed strictly from real User creation and activity in DB
-        recent_activity_users = User.objects.order_by('-created_at')[:5]
-        audit_logs = []
-        for u in recent_activity_users:
-            audit_logs.append({
-                'timestamp': u.created_at.strftime('%b %d, %H:%M'),
-                'action': f'{u.get_role_display()} Account Registered',
+        # Comprehensive Real-Time Audit Logs aggregated from database
+        raw_events = []
+
+        # 1. User Account Events
+        for u in User.objects.order_by('-created_at')[:10]:
+            raw_events.append({
+                'dt': u.created_at,
+                'action': f'{u.get_role_display()} Registration',
                 'user': u.full_name,
-                'details': f'Role: {u.role} | Email: {u.email}',
+                'role': u.role,
+                'status': 'Verified' if u.is_verified else 'Active',
+                'details': f'Account created for {u.email} ({u.occupation or "Member"})',
+                'type': 'security'
             })
+
+        # 2. Mood Log Events
+        for m in MoodLog.objects.order_by('-logged_at')[:10]:
+            raw_events.append({
+                'dt': m.logged_at,
+                'action': 'Mood Log Entry',
+                'user': m.user.full_name,
+                'role': m.user.role,
+                'status': f'Score: {m.mood_score}/10',
+                'details': f'Feeling {m.mood_label}. Note: "{m.note[:60] if m.note else "No note"}"',
+                'type': 'user_action'
+            })
+
+        # 3. Journal Entry Events
+        for j in JournalEntry.objects.order_by('-created_at')[:10]:
+            raw_events.append({
+                'dt': j.created_at,
+                'action': 'Encrypted Journal Entry',
+                'user': j.user.full_name,
+                'role': j.user.role,
+                'status': 'Encrypted 256-bit',
+                'details': f'Title: "{j.title}" (Sentiment Score: {j.sentiment_score:.2f})',
+                'type': 'user_action'
+            })
+
+        # 4. Clinical Assessment Submissions
+        for a in AssessmentSubmission.objects.order_by('-created_at')[:10]:
+            raw_events.append({
+                'dt': a.created_at,
+                'action': f'{a.assessment_type} Assessment Completed',
+                'user': a.user.full_name,
+                'role': a.user.role,
+                'status': a.severity_level,
+                'details': f'Scored {a.score}/{a.max_score} ({a.severity_level} severity)',
+                'type': 'clinical'
+            })
+
+        # 5. Appointments Booked / Updated
+        for app in Appointment.objects.order_by('-created_at')[:10]:
+            raw_events.append({
+                'dt': app.created_at,
+                'action': f'Consultation Session {app.status}',
+                'user': app.client.full_name,
+                'role': 'user',
+                'status': app.status,
+                'details': f'Doctor: {app.doctor.full_name} | Slot: {app.time_slot}',
+                'type': 'clinical'
+            })
+
+        # 6. Treatment Plans Created
+        for tp in TreatmentPlan.objects.order_by('-created_at')[:10]:
+            raw_events.append({
+                'dt': tp.created_at,
+                'action': 'Clinical Treatment Plan Created',
+                'user': tp.client.full_name,
+                'role': 'therapist',
+                'status': tp.status,
+                'details': f'Created by {tp.doctor.full_name}: "{tp.title}"',
+                'type': 'clinical'
+            })
+
+        # 7. Crisis Reports Flagged
+        for cr in CrisisReport.objects.order_by('-flagged_at')[:10]:
+            raw_events.append({
+                'dt': cr.flagged_at,
+                'action': 'Crisis Safety Alert Flagged',
+                'user': cr.user.full_name,
+                'role': cr.user.role,
+                'status': f'{cr.severity.upper()} Severity',
+                'details': f'Triggers: {", ".join(cr.trigger_keywords or ["distress"])}. Resolved: {cr.resolved}',
+                'type': 'security'
+            })
+
+        # Sort all raw events by timestamp descending
+        raw_events.sort(key=lambda x: x['dt'], reverse=True)
+
+        audit_logs = [
+            {
+                'timestamp': ev['dt'].strftime('%b %d, %Y %H:%M:%S'),
+                'raw_iso': ev['dt'].isoformat(),
+                'action': ev['action'],
+                'user': ev['user'],
+                'role': ev['role'],
+                'status': ev['status'],
+                'details': ev['details'],
+                'type': ev['type'],
+            }
+            for ev in raw_events[:25]
+        ]
 
         return Response(
             {
