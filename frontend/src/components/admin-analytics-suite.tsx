@@ -77,14 +77,16 @@ export default function AdminAnalyticsSuite({
       ];
 
     } else if (slug.includes('financial') || slug.includes('revenue') || slug.includes('subscriptions')) {
+      const totalRev = adminStats?.monthly_revenue || '₹0';
       rows = [
         ['Financial Metric / Item', 'Sessions Count / Rate', 'Subtotal Revenue', 'Billing Status', 'Period'],
-        ['Completed Patient Consultations', `${adminStats?.completed_appointments ?? 1} sessions @ ₹1,500`, adminStats?.monthly_revenue || '₹1,500', 'Settled', 'Current Month'],
-        ['Upcoming Booked Appointments', `${adminStats?.pending_appointments ?? 1} sessions @ ₹1,500`, '₹1,500', 'Escrow Pending', 'Current Month'],
+        ['Completed Patient Consultations', `${adminStats?.completed_appointments ?? 0} sessions`, totalRev, 'Settled', 'Current Month'],
+        ['Upcoming Booked Appointments', `${adminStats?.pending_appointments ?? 0} sessions`, '(Included in total)', 'Escrow Pending', 'Current Month'],
         ['Platform Subscription Revenue', 'Freemium Tier', '₹0', 'Active', 'Current Month'],
         ['--- TOTAL REVENUE ---', '---', '---', '---', '---'],
-        ['Estimated Gross Revenue', String(adminStats?.monthly_revenue ?? '₹1,500'), 'Net Platform Revenue', adminStats?.monthly_revenue || '₹1,500', timestamp]
+        ['Estimated Gross Revenue', totalRev, 'Net Platform Revenue', totalRev, timestamp]
       ];
+
 
     } else if (slug.includes('ai_chatbot') || slug.includes('telemetry')) {
       rows = [

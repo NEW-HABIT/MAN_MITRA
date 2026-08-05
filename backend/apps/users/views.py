@@ -739,7 +739,23 @@ class AdminDashboardView(APIView):
         upcoming_appointments_cnt = appt_counts.get(Appointment.Status.UPCOMING, 0) + appt_counts.get(Appointment.Status.SCHEDULED, 0)
         cancelled_appointments_cnt = appt_counts.get(Appointment.Status.CANCELLED, 0)
 
-        total_revenue_amount = (completed_appointments_cnt + upcoming_appointments_cnt) * 1500
+        # Real-time revenue: parse each doctor's consultation_fee string per appointment
+        import re as _re
+        billable_statuses = [Appointment.Status.COMPLETED, Appointment.Status.UPCOMING, Appointment.Status.SCHEDULED]
+        billable_appts = Appointment.objects.filter(status__in=billable_statuses).select_related('doctor')
+        total_revenue_amount = 0
+        for appt in billable_appts:
+            fee_str = appt.doctor.consultation_fee or ''
+            # Extract the first numeric value from strings like "₹1,500 / 45 mins", "₹2000", "2500", etc.
+            numeric_match = _re.search(r'[\d,]+', fee_str.replace('₹', '').replace(' ', ''))
+            if numeric_match:
+                try:
+                    fee_val = int(numeric_match.group(0).replace(',', ''))
+                    total_revenue_amount += fee_val
+                except ValueError:
+                    total_revenue_amount += 1500
+            else:
+                total_revenue_amount += 1500
         formatted_monthly_revenue = f"₹{total_revenue_amount:,}"
 
         # 3. Doctor workload counts in 1 aggregated query
