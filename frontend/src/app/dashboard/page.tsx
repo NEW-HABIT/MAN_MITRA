@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,7 +9,7 @@ import {
   Heart, LayoutDashboard, MessageSquare, BookOpen, User, LogOut, ShieldCheck,
   TrendingUp, Award, BarChart3, Users, Zap, ShieldAlert, Sparkles, Check, Menu, X,
   Stethoscope, Clock, Activity, Star, UserCheck, CheckCircle2, Trash2, UserPlus,
-  Bot, Download, Lock, Brain, Eye, EyeOff
+  Bot, Download, Lock, Brain, Eye, EyeOff, Bell, BellRing, AlertOctagon
 } from 'lucide-react';
 
 
@@ -43,6 +43,12 @@ export default function DashboardPage() {
   const [moodOpen, setMoodOpen] = useState(false);
   const [moodTrend, setMoodTrend] = useState<any[]>([]);
   const [streakStats, setStreakStats] = useState({ current: 0, longest: 0 });
+
+  // ── Notification state ────────────────────────────────────────────────────
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const notifRef = useRef<HTMLDivElement>(null);
 
   // Admin stats state & Doctor registration state
   const [adminStats, setAdminStats] = useState<any | null>(null);
@@ -570,6 +576,52 @@ export default function DashboardPage() {
     router.push('/');
   };
 
+  // ── Notification fetch & polling ─────────────────────────────────────────
+  const fetchNotifications = useCallback(async () => {
+    if (!accessToken || (user?.role !== 'admin' && user?.role !== 'therapist')) return;
+    try {
+      const res = await fetch(`${API_URL}/api/auth/notifications/`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(Array.isArray(data) ? data : []);
+      }
+    } catch (_) {
+      // silently ignore transient network errors
+    }
+  }, [accessToken, user?.role]);
+
+  useEffect(() => {
+    if (user?.role === 'admin' || user?.role === 'therapist') {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchNotifications, user?.role]);
+
+  // Close notif dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    };
+    if (notifOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [notifOpen]);
+
+  const unreadNotifs = notifications.filter(n => !readIds.has(n.id));
+  const emergencyNotifs = unreadNotifs.filter(n => n.type === 'Emergency');
+
+  const handleOpenNotifPanel = () => {
+    setNotifOpen(prev => !prev);
+    // Mark all current as read when opening
+    if (!notifOpen) {
+      setReadIds(new Set(notifications.map(n => n.id)));
+    }
+  };
+
   if (!mounted || !user) return null;
 
   return (
@@ -927,6 +979,166 @@ export default function DashboardPage() {
               >
                 Log Today's Mood
               </button>
+            )}
+
+            {/* ── Notification Bell (Admin + Doctor only) ───────────────── */}
+            {(user.role === 'admin' || user.role === 'therapist') && (
+              <div className="relative" ref={notifRef}>
+                {/* Emergency pulsing ring */}
+                {emergencyNotifs.length > 0 && !notifOpen && (
+                  <span className="absolute -inset-1 rounded-full bg-rose-400/30 animate-ping pointer-events-none" />
+                )}
+
+                <button
+                  id="notification-bell-btn"
+                  onClick={handleOpenNotifPanel}
+                  className={`relative w-10 h-10 rounded-2xl flex items-center justify-center transition-all border shadow-sm cursor-pointer ${
+                    emergencyNotifs.length > 0
+                      ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100'
+                      : 'bg-white border-sky-100 text-slate-500 hover:border-sky-300 hover:text-[#0284c7]'
+                  }`}
+                >
+                  {emergencyNotifs.length > 0 ? (
+                    <BellRing className="w-5 h-5 animate-pulse" />
+                  ) : (
+                    <Bell className="w-5 h-5" />
+                  )}
+
+                  {/* Unread count badge */}
+                  {unreadNotifs.length > 0 && (
+                    <span className={`absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center ${
+                      emergencyNotifs.length > 0 ? 'bg-rose-600 text-white' : 'bg-[#0284c7] text-white'
+                    }`}>
+                      {unreadNotifs.length > 9 ? '9+' : unreadNotifs.length}
+                    </span>
+                  )}
+                </button>
+
+                {/* ── Notification Dropdown Panel ──────────────────────── */}
+                <AnimatePresence>
+                  {notifOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                      transition={{ duration: 0.18 }}
+                      className="absolute right-0 top-12 z-[200] w-[360px] max-w-[90vw] bg-white rounded-3xl shadow-2xl shadow-slate-200 border border-slate-100 overflow-hidden"
+                    >
+                      {/* Panel Header */}
+                      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
+                        <div className="flex items-center gap-2">
+                          <Bell className="w-4 h-4 text-[#0284c7]" />
+                          <h3 className="text-sm font-bold text-slate-900 font-outfit">Notifications</h3>
+                          {emergencyNotifs.length > 0 && (
+                            <span className="flex items-center gap-1 text-[10px] bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-full font-bold">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                              {emergencyNotifs.length} Emergency
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={fetchNotifications}
+                            className="text-[10px] text-slate-400 hover:text-[#0284c7] font-semibold transition-colors cursor-pointer"
+                          >
+                            Refresh
+                          </button>
+                          <button
+                            onClick={() => setNotifOpen(false)}
+                            className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Notification List */}
+                      <div className="overflow-y-auto max-h-[420px] divide-y divide-slate-50">
+                        {notifications.length === 0 ? (
+                          <div className="py-14 flex flex-col items-center justify-center gap-2 text-slate-400">
+                            <Bell className="w-8 h-8 opacity-30" />
+                            <p className="text-xs font-semibold">All clear — no notifications yet</p>
+                          </div>
+                        ) : (
+                          notifications.map((notif) => {
+                            const isEmergency = notif.type === 'Emergency';
+                            return (
+                              <div
+                                key={notif.id}
+                                className={`px-5 py-4 flex gap-3 transition-colors ${
+                                  isEmergency
+                                    ? 'bg-gradient-to-r from-rose-50 to-red-50/30 border-l-4 border-rose-500'
+                                    : 'hover:bg-slate-50/60'
+                                }`}
+                              >
+                                {/* Icon */}
+                                <div className={`mt-0.5 flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center ${
+                                  isEmergency
+                                    ? 'bg-rose-100 text-rose-600'
+                                    : notif.type === 'Reminder'
+                                    ? 'bg-amber-50 text-amber-600'
+                                    : notif.type === 'Maintenance'
+                                    ? 'bg-slate-100 text-slate-500'
+                                    : 'bg-sky-50 text-[#0284c7]'
+                                }`}>
+                                  {isEmergency ? (
+                                    <AlertOctagon className="w-4 h-4 animate-pulse" />
+                                  ) : (
+                                    <Bell className="w-4 h-4" />
+                                  )}
+                                </div>
+
+                                {/* Content */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2 mb-0.5">
+                                    <span className={`text-xs font-bold leading-tight ${
+                                      isEmergency ? 'text-rose-800' : 'text-slate-900'
+                                    }`}>
+                                      {notif.title}
+                                    </span>
+                                    <span className={`flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
+                                      isEmergency
+                                        ? 'bg-rose-200 text-rose-800 border border-rose-300'
+                                        : notif.type === 'Reminder'
+                                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                        : 'bg-sky-50 text-sky-700 border border-sky-200'
+                                    }`}>
+                                      {isEmergency ? '🚨 Emergency' : notif.type}
+                                    </span>
+                                  </div>
+                                  <p className={`text-[11px] leading-relaxed line-clamp-2 ${
+                                    isEmergency ? 'text-rose-700 font-medium' : 'text-slate-500'
+                                  }`}>
+                                    {notif.message}
+                                  </p>
+                                  <span className="text-[10px] text-slate-400 mt-1 block font-medium">
+                                    {notif.created_at}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      {/* Panel Footer */}
+                      {notifications.length > 0 && (
+                        <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between">
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            {notifications.length} notification{notifications.length !== 1 ? 's' : ''} · Auto-refreshes every 30s
+                          </span>
+                          <button
+                            onClick={() => setReadIds(new Set(notifications.map((n: any) => n.id)))}
+                            className="text-[10px] text-[#0284c7] font-bold hover:underline cursor-pointer"
+                          >
+                            Mark all read
+                          </button>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
           </div>
         </header>

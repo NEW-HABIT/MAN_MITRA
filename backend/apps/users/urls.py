@@ -78,6 +78,7 @@ urlpatterns = [
     path('therapist/patients/', TherapistPatientsView.as_view(), name='therapist-patients'),
     path('therapist/patients/<uuid:client_id>/analysis/', ClientAnalysisView.as_view(), name='client-analysis'),
     path('therapist/schedule/', TherapistScheduleView.as_view(), name='therapist-schedule'),
+    path('therapist/schedule/<uuid:appointment_id>/', TherapistScheduleView.as_view(), name='therapist-schedule-detail'),
     path('treatment-plans/', TreatmentPlanView.as_view(), name='treatment-plans'),
 
     # ── Clinical Assessments ─────────────────────────────────────────────────

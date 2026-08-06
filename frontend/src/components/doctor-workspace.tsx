@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Stethoscope, Users, Calendar, Clock, Activity, Video, FileText, CheckCircle2,
   AlertTriangle, Heart, User, Sparkles, X, ChevronRight, MessageSquare, Plus, Save,
-  Pill, Download, Phone, ShieldAlert, Check, RefreshCw, Brain, TrendingUp, Zap, Info
+  Pill, Download, Phone, ShieldAlert, Check, RefreshCw, Brain, TrendingUp, Zap, Info,
+  Timer
 } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import { API_URL } from '@/config';
@@ -31,12 +32,23 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
   const [medicationInput, setMedicationInput] = useState('Sertraline 50mg (Morning)');
   const [treatmentSaved, setTreatmentSaved] = useState(false);
 
-  // AI Client Analysis state
+  // AI Client Analysis state (manual modal)
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
   const [analyzingPatient, setAnalyzingPatient] = useState<any | null>(null);
   const [analysisData, setAnalysisData] = useState<any | null>(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [analysisError, setAnalysisError] = useState('');
+
+  // Auto AI Analysis state (background 10-min polling)
+  const AUTO_SCAN_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+  const [autoAnalysisResults, setAutoAnalysisResults] = useState<Record<string, any>>({});
+  const [criticalPatients, setCriticalPatients] = useState<any[]>([]);
+  const [autoScanRunning, setAutoScanRunning] = useState(false);
+  const [lastAutoScanTime, setLastAutoScanTime] = useState<Date | null>(null);
+  const [nextScanCountdown, setNextScanCountdown] = useState<number | null>(null);
+  const autoScanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const patientsRef = useRef<any[]>([]);
 
   const handleFetchAIAnalysis = async (patient: any) => {
     setAnalyzingPatient(patient);
@@ -60,6 +72,72 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
     } finally {
       setAnalysisLoading(false);
     }
+  };
+
+  // ─── Auto AI Analysis (every 10 min) ───────────────────────────────────────
+  const runAutoAnalysisForAll = useCallback(async () => {
+    const currentPatients = patientsRef.current;
+    if (!currentPatients.length || !accessToken) return;
+    setAutoScanRunning(true);
+    const results: Record<string, any> = {};
+    const critical: any[] = [];
+
+    await Promise.allSettled(
+      currentPatients.map(async (patient) => {
+        try {
+          const res = await fetch(`${API_URL}/api/auth/therapist/patients/${patient.id}/analysis/`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            results[patient.id] = data;
+            if (
+              data.overall_condition === 'Critical' ||
+              data.risk_level === 'High'
+            ) {
+              critical.push({ ...patient, aiAnalysis: data });
+            }
+          }
+        } catch (_) {
+          // silently skip network failures per patient
+        }
+      })
+    );
+
+    setAutoAnalysisResults((prev) => ({ ...prev, ...results }));
+    setCriticalPatients(critical);
+    setLastAutoScanTime(new Date());
+    setAutoScanRunning(false);
+
+    // Reset countdown
+    setNextScanCountdown(AUTO_SCAN_INTERVAL_MS / 1000);
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    countdownIntervalRef.current = setInterval(() => {
+      setNextScanCountdown((prev) => (prev !== null && prev > 1 ? prev - 1 : 0));
+    }, 1000);
+  }, [accessToken, AUTO_SCAN_INTERVAL_MS]);
+
+  // Keep patientsRef in sync so the callback always sees fresh patients
+  useEffect(() => {
+    patientsRef.current = patients;
+  }, [patients]);
+
+  // Kick off auto-scan once patients are loaded, then repeat every 10 min
+  useEffect(() => {
+    if (!patients.length) return;
+    runAutoAnalysisForAll();
+    autoScanIntervalRef.current = setInterval(runAutoAnalysisForAll, AUTO_SCAN_INTERVAL_MS);
+    return () => {
+      if (autoScanIntervalRef.current) clearInterval(autoScanIntervalRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    };
+  }, [patients.length > 0, runAutoAnalysisForAll]);
+
+  // Helper: format countdown as MM:SS
+  const formatCountdown = (secs: number) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
   };
 
   useEffect(() => {
@@ -128,10 +206,32 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
     }, 4000);
   };
 
-  const handleUpdateAppointmentStatus = (id: string, newStatus: string) => {
+  const handleUpdateAppointmentStatus = async (id: string, newStatus: string) => {
+    // Optimistic UI update
     setSchedule(prev => prev.map(item => item.id === id ? { ...item, status: newStatus } : item));
-    setNotice(`✔ Appointment status updated to ${newStatus}.`);
-    setTimeout(() => setNotice(''), 3000);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/therapist/schedule/${id}/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        setNotice(`✔ Appointment status updated to ${newStatus}.`);
+      } else {
+        // Revert optimistic update on failure
+        setSchedule(prev => prev.map(item => item.id === id ? { ...item, status: item.status } : item));
+        const err = await res.json().catch(() => ({}));
+        setNotice(`⚠ Failed to update appointment: ${err.error || 'Server error.'}`);
+      }
+    } catch {
+      // Revert on network error
+      setSchedule(prev => prev.map(item => item.id === id ? { ...item, status: item.status } : item));
+      setNotice('⚠ Network error — appointment status was not saved.');
+    }
+    setTimeout(() => setNotice(''), 4000);
   };
 
   const handleExportProgressReport = (patientName: string) => {
@@ -168,7 +268,7 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
             {doctorName.replace('Dr. ', '').charAt(0)}
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-xl font-bold font-outfit text-slate-900">{doctorName}</h2>
               <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${
                 dutyStatus === 'Available' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
@@ -177,6 +277,17 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
               }`}>
                 ● {dutyStatus}
               </span>
+              {/* Auto-scan status badge */}
+              {autoScanRunning ? (
+                <span className="flex items-center gap-1.5 text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 rounded-full font-bold">
+                  <Brain className="w-3 h-3 animate-pulse" /> AI Scanning All Patients…
+                </span>
+              ) : lastAutoScanTime ? (
+                <span className="flex items-center gap-1.5 text-[10px] bg-slate-50 text-slate-500 border border-slate-200 px-2.5 py-0.5 rounded-full font-bold">
+                  <Timer className="w-3 h-3" />
+                  Next AI scan in {nextScanCountdown !== null ? formatCountdown(nextScanCountdown) : '--:--'}
+                </span>
+              ) : null}
             </div>
             <p className="text-xs text-slate-500 mt-0.5">Guide & Wellness Workspace • 1-on-1 Sessions & Care Support</p>
           </div>
@@ -224,12 +335,18 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
         </button>
         <button
           onClick={() => setActiveTab('crisis')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
             activeTab === 'crisis' ? 'bg-red-600 text-white shadow-sm' : 'bg-white text-red-600 hover:bg-red-50 border border-red-100'
           }`}
         >
           Immediate Support Alerts
-
+          {criticalPatients.length > 0 && (
+            <span className={`text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center ${
+              activeTab === 'crisis' ? 'bg-white text-red-600' : 'bg-red-600 text-white'
+            }`}>
+              {criticalPatients.length}
+            </span>
+          )}
         </button>
       </div>
 
@@ -332,51 +449,204 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
 
       {/* Tab 3: Crisis Management Alerts */}
       {activeTab === 'crisis' && (
-        <div className="glass-panel p-6 rounded-3xl bg-white border border-red-100 shadow-sm space-y-4">
+        <div className="glass-panel p-6 rounded-3xl bg-white border border-red-100 shadow-sm space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-red-600 font-bold text-base">
               <ShieldAlert className="w-5 h-5" /> Urgent Safety & Crisis Alerts Protocol
             </div>
-            <span className="flex items-center gap-1.5 text-[10px] bg-red-50 text-red-700 border border-red-200 px-2.5 py-0.5 rounded-full font-bold">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-              Live Safety Monitoring
-            </span>
-          </div>
-          <p className="text-xs text-slate-500">Real-time alerts triggered by high stress levels (7+/10), severe depression/anxiety scores, or crisis flags.</p>
-
-          {patients.filter(p => p.stress_level >= 7 || p.risk_status === 'High Risk').length > 0 ? (
-            patients.filter(p => p.stress_level >= 7 || p.risk_status === 'High Risk').map((patient) => (
-              <div key={patient.id} className="p-4 rounded-2xl bg-red-50/80 border border-red-200 space-y-3 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-red-900">{patient.full_name} ({patient.email})</span>
-                    <span className="text-[10px] bg-red-200 text-red-900 font-bold px-2 py-0.5 rounded-full">
-                      Stress Level {patient.stress_level}/10
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-red-700 font-bold">High Severity Alert</span>
-                </div>
-                <p className="text-xs text-slate-700 font-medium">
-                  Patient requires priority outreach. Self-reported elevated stress ({patient.stress_level}/10) with active care notes: "{patient.care_notes || 'High stress indicator'}".
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <button onClick={() => setNotice(`Initiating priority call to ${patient.full_name}...`)} className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
-                    <Phone className="w-3.5 h-3.5" /> Call Patient Directly
-                  </button>
-                  <button onClick={() => handleFetchAIAnalysis(patient)} className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
-                    <Brain className="w-3.5 h-3.5" /> Run AI Condition Analysis
-                  </button>
-                  <button onClick={() => setNotice(`Emergency care protocol escalated for ${patient.full_name}.`)} className="px-4 py-2 rounded-xl bg-white border border-red-200 text-red-700 hover:bg-red-50 text-xs font-bold cursor-pointer">
-                    Escalate Emergency Protocol
-                  </button>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="p-6 text-center text-slate-400 text-xs font-semibold bg-slate-50 rounded-2xl border border-slate-100">
-              No high-risk emergency flags detected among assigned patients. All patients are currently evaluated as stable.
+            <div className="flex items-center gap-2">
+              {autoScanRunning && (
+                <span className="flex items-center gap-1.5 text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 rounded-full font-bold">
+                  <Brain className="w-3 h-3 animate-pulse" /> AI Scanning…
+                </span>
+              )}
+              <span className="flex items-center gap-1.5 text-[10px] bg-red-50 text-red-700 border border-red-200 px-2.5 py-0.5 rounded-full font-bold">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                Live Safety Monitoring
+              </span>
             </div>
+          </div>
+
+          {lastAutoScanTime && (
+            <p className="text-[11px] text-slate-400 -mt-4">
+              Last AI scan: {lastAutoScanTime.toLocaleTimeString()} •{' '}
+              {nextScanCountdown !== null ? `Next in ${formatCountdown(nextScanCountdown)}` : ''}
+            </p>
           )}
+
+          {/* ── Section 1: AI-Detected Critical Patients ── */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Brain className="w-4 h-4 text-purple-600" />
+              <h4 className="text-sm font-bold text-slate-800">AI-Detected Critical Conditions</h4>
+              <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full font-bold">
+                Auto-scanned every 10 min
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">Patients flagged Critical or High-Risk by the latest AI wellness analysis.</p>
+
+            {criticalPatients.length > 0 ? (
+              <div className="space-y-3">
+                {criticalPatients.map((patient) => {
+                  const ai = patient.aiAnalysis;
+                  return (
+                    <motion.div
+                      key={`ai-${patient.id}`}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 rounded-2xl bg-gradient-to-br from-purple-50 to-red-50 border border-purple-200 space-y-3 shadow-sm"
+                    >
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Brain className="w-4 h-4 text-purple-600" />
+                          <span className="text-xs font-bold text-slate-900">{patient.full_name}</span>
+                          <span className="text-[10px] text-slate-500">{patient.email}</span>
+                          {ai?.overall_condition && (
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                              ai.overall_condition === 'Critical'
+                                ? 'bg-red-100 text-red-800 border-red-300'
+                                : 'bg-amber-100 text-amber-800 border-amber-300'
+                            }`}>
+                              ● {ai.overall_condition}
+                            </span>
+                          )}
+                          {ai?.risk_level && (
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              ai.risk_level === 'High' ? 'bg-red-600 text-white' : 'bg-amber-500 text-white'
+                            }`}>
+                              {ai.risk_level} Risk
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] font-bold text-purple-700 bg-purple-100 border border-purple-200 px-2 py-0.5 rounded-full">
+                          AI Flagged
+                        </span>
+                      </div>
+
+                      {ai?.detailed_summary && (
+                        <p className="text-xs text-slate-700 leading-relaxed bg-white/70 rounded-xl p-3 border border-purple-100">
+                          {ai.detailed_summary}
+                        </p>
+                      )}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {ai?.key_concerns?.length > 0 && (
+                          <div className="p-3 rounded-xl bg-red-50 border border-red-100 space-y-1">
+                            <div className="flex items-center gap-1 text-[10px] font-bold text-red-700 uppercase">
+                              <AlertTriangle className="w-3 h-3" /> Key Concerns
+                            </div>
+                            <ul className="space-y-1">
+                              {ai.key_concerns.slice(0, 3).map((c: string, i: number) => (
+                                <li key={i} className="text-[11px] text-slate-700 flex items-start gap-1">
+                                  <span className="text-red-500 font-bold">•</span> {c}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {ai?.recommended_actions?.length > 0 && (
+                          <div className="p-3 rounded-xl bg-sky-50 border border-sky-100 space-y-1">
+                            <div className="flex items-center gap-1 text-[10px] font-bold text-sky-700 uppercase">
+                              <Zap className="w-3 h-3" /> Recommended Actions
+                            </div>
+                            <ul className="space-y-1">
+                              {ai.recommended_actions.slice(0, 3).map((a: string, i: number) => (
+                                <li key={i} className="text-[11px] text-slate-700 flex items-start gap-1">
+                                  <span className="text-sky-500 font-bold">{i + 1}.</span> {a}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <button
+                          onClick={() => setNotice(`Initiating priority call to ${patient.full_name}...`)}
+                          className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5"
+                        >
+                          <Phone className="w-3.5 h-3.5" /> Call Patient
+                        </button>
+                        <button
+                          onClick={() => handleFetchAIAnalysis(patient)}
+                          className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center gap-1.5"
+                        >
+                          <Brain className="w-3.5 h-3.5" /> Full Analysis
+                        </button>
+                        <button
+                          onClick={() => setNotice(`Emergency care protocol escalated for ${patient.full_name}.`)}
+                          className="px-4 py-2 rounded-xl bg-white border border-red-200 text-red-700 hover:bg-red-50 text-xs font-bold"
+                        >
+                          Escalate Protocol
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-5 rounded-2xl bg-purple-50/40 border border-purple-100 text-center">
+                {autoScanRunning ? (
+                  <div className="flex flex-col items-center gap-2 text-purple-700">
+                    <Brain className="w-6 h-6 animate-pulse" />
+                    <p className="text-xs font-semibold">Running AI analysis on all patients…</p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 font-semibold">
+                    {lastAutoScanTime
+                      ? 'No critical conditions detected in latest AI scan. All patients evaluated as stable.'
+                      : 'AI scan will begin shortly after patients load.'}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ── Section 2: Classic High-Stress Alerts ── */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <h4 className="text-sm font-bold text-slate-800">Self-Reported High Stress</h4>
+              <span className="text-[10px] bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full font-bold">
+                Stress ≥ 7/10
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">Triggered by self-reported stress levels of 7 or higher, or High Risk status.</p>
+
+            {patients.filter(p => p.stress_level >= 7 || p.risk_status === 'High Risk').length > 0 ? (
+              patients.filter(p => p.stress_level >= 7 || p.risk_status === 'High Risk').map((patient) => (
+                <div key={patient.id} className="p-4 rounded-2xl bg-red-50/80 border border-red-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-red-900">{patient.full_name} ({patient.email})</span>
+                      <span className="text-[10px] bg-red-200 text-red-900 font-bold px-2 py-0.5 rounded-full">
+                        Stress {patient.stress_level}/10
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-red-700 font-bold">High Severity Alert</span>
+                  </div>
+                  <p className="text-xs text-slate-700 font-medium">
+                    Patient requires priority outreach. Self-reported elevated stress ({patient.stress_level}/10) with active care notes: &quot;{patient.care_notes || 'High stress indicator'}&quot;.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={() => setNotice(`Initiating priority call to ${patient.full_name}...`)} className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                      <Phone className="w-3.5 h-3.5" /> Call Patient Directly
+                    </button>
+                    <button onClick={() => handleFetchAIAnalysis(patient)} className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                      <Brain className="w-3.5 h-3.5" /> Run AI Condition Analysis
+                    </button>
+                    <button onClick={() => setNotice(`Emergency care protocol escalated for ${patient.full_name}.`)} className="px-4 py-2 rounded-xl bg-white border border-red-200 text-red-700 hover:bg-red-50 text-xs font-bold cursor-pointer">
+                      Escalate Emergency Protocol
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-5 text-center text-slate-400 text-xs font-semibold bg-slate-50 rounded-2xl border border-slate-100">
+                No high-stress flags detected. All patients are currently evaluated as stable.
+              </div>
+            )}
+          </div>
         </div>
       )}
 

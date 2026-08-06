@@ -1418,8 +1418,11 @@ class TherapistPatientsView(APIView):
 
 class TherapistScheduleView(APIView):
     """
-    GET /api/auth/therapist/schedule/
-    Returns routine consultation booking schedule queried 100% strictly from Appointment database table.
+    GET  /api/auth/therapist/schedule/
+    Returns routine consultation booking schedule from the Appointment table.
+
+    PATCH /api/auth/therapist/schedule/<appointment_id>/
+    Updates the status of a specific appointment (Completed / Cancelled).
     """
     permission_classes = [permissions.IsAuthenticated]
 
@@ -1443,6 +1446,37 @@ class TherapistScheduleView(APIView):
             })
 
         return Response(schedule_slots, status=status.HTTP_200_OK)
+
+    def patch(self, request: Request, appointment_id=None) -> Response:
+        """Update appointment status — persists change to the DB."""
+        if request.user.role not in [User.Role.THERAPIST, User.Role.ADMIN]:
+            return Response({'error': 'Only specialists can update appointment status.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if not appointment_id:
+            return Response({'error': 'appointment_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        new_status = request.data.get('status', '').strip()
+        valid_statuses = [Appointment.Status.COMPLETED, Appointment.Status.CANCELLED,
+                          Appointment.Status.UPCOMING, Appointment.Status.SCHEDULED]
+        if new_status not in valid_statuses:
+            return Response(
+                {'error': f'Invalid status. Valid values: {", ".join(valid_statuses)}'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            appointment = Appointment.objects.get(id=appointment_id)
+        except Appointment.DoesNotExist:
+            return Response({'error': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        appointment.status = new_status
+        appointment.save(update_fields=['status'])
+
+        return Response({
+            'id': str(appointment.id),
+            'status': appointment.status,
+            'message': f'Appointment status updated to {new_status}.',
+        }, status=status.HTTP_200_OK)
 
 
 class AdminClientCreateView(APIView):
