@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import CookieBanner from "@/components/cookie-banner";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "ManMitra — Your AI Companion for Mental Wellness",
@@ -21,6 +22,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[#090e0c] text-[#e6f0ed] antialiased">
         {children}
         <CookieBanner />
+        <Analytics />
       </body>
     </html>
   );
