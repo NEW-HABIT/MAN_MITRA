@@ -216,7 +216,6 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
   const [treatmentSaved, setTreatmentSaved] = useState(false);
 
   // Roster Filter State
-  const [modeFilter, setModeFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // AI Client Analysis state (manual modal)
@@ -506,18 +505,17 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
     }, 800);
   };
 
-  // Filtered patients by mode of approach and search query
+  // Filtered patients by search query
   const filteredPatients = useMemo(() => {
     return patients.filter(p => {
       const pMode = (p.mode_of_approach || '').toLowerCase();
-      const matchesMode = modeFilter === 'all' || pMode.includes(modeFilter.toLowerCase());
-      const matchesSearch = !searchQuery || 
-        p.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        pMode.includes(searchQuery.toLowerCase());
-      return matchesMode && matchesSearch;
+      const query = searchQuery.toLowerCase();
+      return !searchQuery || 
+        p.full_name.toLowerCase().includes(query) ||
+        p.email.toLowerCase().includes(query) ||
+        pMode.includes(query);
     });
-  }, [patients, modeFilter, searchQuery]);
+  }, [patients, searchQuery]);
 
   return (
     <div className="space-y-6 text-left pb-12">
@@ -612,142 +610,114 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
         </div>
       </div>
 
-      {/* Tab 1: Assigned Patients & Mode of Approach Roster */}
+      {/* Tab 1: Assigned Patients Roster */}
       {activeTab === 'patients' && (
         <div className="space-y-4">
-          {/* Mode of Approach Filter & Search Bar */}
-          <div className="p-4 rounded-3xl bg-white border border-sky-100 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs">
-              <span className="text-slate-400 font-bold text-[11px] uppercase mr-1 flex items-center gap-1 shrink-0">
-                <Target className="w-3.5 h-3.5 text-[#0284c7]" /> Filter Approach:
-              </span>
-              <button
-                onClick={() => setModeFilter('all')}
-                className={`px-3 py-1.5 rounded-xl font-bold transition-all shrink-0 cursor-pointer ${
-                  modeFilter === 'all' ? 'bg-[#0284c7] text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                All Approaches ({patients.length})
-              </button>
-              {MODES_OF_APPROACH.map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => setModeFilter(m.shortName)}
-                  className={`px-3 py-1.5 rounded-xl font-bold transition-all shrink-0 cursor-pointer text-[11px] ${
-                    modeFilter.toLowerCase() === m.shortName.toLowerCase()
-                      ? 'bg-slate-900 text-white shadow-sm'
-                      : 'bg-slate-50 text-slate-600 hover:bg-sky-50 hover:text-[#0284c7] border border-slate-200/60'
-                  }`}
-                >
-                  {m.shortName}
-                </button>
-              ))}
+          {/* Search & Header Bar */}
+          <div className="p-4 rounded-3xl bg-white border border-sky-100 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 font-outfit">Assigned Patients ({filteredPatients.length})</h3>
+              <p className="text-xs text-slate-500">Select any patient to review telemetry and configure clinical treatment</p>
             </div>
 
-            <div className="relative w-full md:w-64">
+            <div className="relative w-full sm:w-72">
               <input
                 type="text"
-                placeholder="Search patient name, email, mode..."
+                placeholder="Search patient name, email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 border border-slate-200 focus:outline-none focus:border-[#0284c7] focus:bg-white"
+                className="w-full px-3.5 py-2 rounded-xl text-xs bg-slate-50 border border-slate-200 focus:outline-none focus:border-[#0284c7] focus:bg-white"
               />
             </div>
           </div>
 
           {/* Patients Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredPatients.map(p => {
-              const currentModeStr = p.mode_of_approach || 'Cognitive Behavioral Therapy (CBT)';
-              const matchedMode = MODES_OF_APPROACH.find(m => 
-                m.name.toLowerCase() === currentModeStr.toLowerCase() ||
-                m.shortName.toLowerCase() === currentModeStr.toLowerCase() ||
-                currentModeStr.toLowerCase().includes(m.shortName.toLowerCase())
-              ) || MODES_OF_APPROACH[0];
+            {filteredPatients.map(p => (
+              <motion.div
+                key={p.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-panel p-5 rounded-3xl bg-white border border-sky-100 shadow-sm space-y-4 flex flex-col justify-between hover:border-sky-300 transition-all"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 font-outfit">{p.full_name}</h3>
+                      <p className="text-[11px] text-slate-500">{p.email}</p>
+                    </div>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${
+                      p.stress_level >= 7 ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    }`}>
+                      Stress: {p.stress_level}/10
+                    </span>
+                  </div>
 
-              return (
-                <motion.div
-                  key={p.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="glass-panel p-5 rounded-3xl bg-white border border-sky-100 shadow-sm space-y-4 flex flex-col justify-between hover:border-sky-300 transition-all"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h3 className="text-sm font-bold text-slate-900 font-outfit">{p.full_name}</h3>
-                        <p className="text-[11px] text-slate-500">{p.email}</p>
-                      </div>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${
-                        p.stress_level >= 7 ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      }`}>
-                        Stress: {p.stress_level}/10
+                  {/* Mode of Approach Card Badge */}
+                  <div className="p-3 rounded-2xl border bg-sky-50/40 border-sky-100 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <Target className="w-3 h-3 text-[#0284c7]" /> Mode of Approach
                       </span>
-                    </div>
-
-                    {/* Mode of Approach Card Badge */}
-                    <div className={`p-3 rounded-2xl border ${matchedMode.bgLight} ${matchedMode.borderColor} space-y-1`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                          <Target className="w-3 h-3 text-[#0284c7]" /> Mode of Approach
+                      {p.mode_of_approach && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md border text-[#0284c7] bg-sky-100 border-sky-200">
+                          Active
                         </span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${matchedMode.badgeColor}`}>
-                          {matchedMode.shortName}
-                        </span>
-                      </div>
-                      <h4 className="text-xs font-bold text-slate-900">{matchedMode.name}</h4>
-                      <p className="text-[11px] text-slate-600 line-clamp-1">{matchedMode.tagline}</p>
+                      )}
                     </div>
+                    <h4 className="text-xs font-bold text-slate-900">
+                      {p.mode_of_approach || 'Not Set Yet'}
+                    </h4>
+                  </div>
 
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase">
-                        <span>Recent Mood Trend</span>
-                        <span className="text-slate-500 font-medium">{p.total_journals_logged || 0} Journals</span>
-                      </div>
-                      <div className="h-14 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={p.mood_history || []}>
-                            <Line type="monotone" dataKey="score" stroke="#0284c7" strokeWidth={2.5} dot={false} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase">
+                      <span>Recent Mood Trend</span>
+                      <span className="text-slate-500 font-medium">{p.total_journals_logged || 0} Journals</span>
                     </div>
-
-                    <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-[11px] space-y-1">
-                      <span className="font-bold text-slate-700 block">Session Notes & Diagnosis</span>
-                      <p className="text-slate-500 line-clamp-2">{p.care_notes || p.diagnosis || 'Active patient engagement.'}</p>
+                    <div className="h-14 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={p.mood_history || []}>
+                          <Line type="monotone" dataKey="score" stroke="#0284c7" strokeWidth={2.5} dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
-                    <button
-                      onClick={() => handleFetchAIAnalysis(p)}
-                      className="w-full py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
-                    >
-                      <Brain className="w-3.5 h-3.5" /> AI Condition Analysis
-                    </button>
-                    <button
-                      onClick={() => handleOpenPatientDrawer(p)}
-                      className="w-full py-2.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-[#0284c7] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-sky-200"
-                    >
-                      <Target className="w-3.5 h-3.5" /> Configure Treatment & Mode
-                    </button>
+                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-[11px] space-y-1">
+                    <span className="font-bold text-slate-700 block">Session Notes & Diagnosis</span>
+                    <p className="text-slate-500 line-clamp-2">{p.care_notes || p.diagnosis || 'No notes recorded yet.'}</p>
                   </div>
-                </motion.div>
-              );
-            })}
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
+                  <button
+                    onClick={() => handleFetchAIAnalysis(p)}
+                    className="w-full py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                  >
+                    <Brain className="w-3.5 h-3.5" /> AI Condition Analysis
+                  </button>
+                  <button
+                    onClick={() => handleOpenPatientDrawer(p)}
+                    className="w-full py-2.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-[#0284c7] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-sky-200"
+                  >
+                    <Target className="w-3.5 h-3.5" /> Configure Treatment & Mode
+                  </button>
+                </div>
+              </motion.div>
+            ))}
           </div>
 
           {filteredPatients.length === 0 && (
             <div className="p-12 text-center glass-panel rounded-3xl bg-white border border-sky-100 space-y-2">
               <Users className="w-8 h-8 text-slate-400 mx-auto" />
               <h4 className="text-sm font-bold text-slate-800">No Patients Found</h4>
-              <p className="text-xs text-slate-500">No patients matched the selected Mode of Approach filter or search query.</p>
+              <p className="text-xs text-slate-500">No patients matched your search query.</p>
               <button
-                onClick={() => { setModeFilter('all'); setSearchQuery(''); }}
+                onClick={() => setSearchQuery('')}
                 className="px-4 py-2 rounded-xl bg-sky-50 text-[#0284c7] text-xs font-bold mt-2 cursor-pointer"
               >
-                Clear Filters
+                Clear Search
               </button>
             </div>
           )}
