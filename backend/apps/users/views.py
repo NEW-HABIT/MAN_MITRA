@@ -1344,15 +1344,8 @@ class AdminAssignPatientView(APIView):
             client=client,
             defaults={
                 'title': session_type,
-                'diagnosis': 'Clinical Care & Supportive Guidance',
                 'status': 'Active'
             }
-        )
-
-        DoctorCareNote.objects.get_or_create(
-            doctor=doctor,
-            client=client,
-            defaults={'content': f'Assigned patient {client.full_name} to {doctor.full_name} with Mode of Approach: {session_type}.'}
         )
 
         return Response({
@@ -1402,7 +1395,7 @@ class TherapistPatientsView(APIView):
 
             # Query real DoctorCareNote from database
             care_note_obj = DoctorCareNote.objects.filter(client=c).first()
-            care_notes_content = care_note_obj.content if care_note_obj else f'Patient {c.full_name} is engaging consistently. Stress level is {stress_lvl}/10.'
+            care_notes_content = care_note_obj.content if care_note_obj else ''
 
             # Query next appointment from database
             next_app = Appointment.objects.filter(client=c, status=Appointment.Status.UPCOMING).first()
@@ -1410,9 +1403,9 @@ class TherapistPatientsView(APIView):
 
             # Query treatment plan and mode of approach
             treatment_plan_obj = TreatmentPlan.objects.filter(client=c).order_by('-created_at').first()
-            mode_of_approach = treatment_plan_obj.title if treatment_plan_obj else (next_app.session_type if next_app else 'Cognitive Behavioral Therapy (CBT)')
-            diagnosis_val = treatment_plan_obj.diagnosis if treatment_plan_obj else 'Workplace Stress & Mild Anxiety'
-            assigned_ex = treatment_plan_obj.assigned_exercises if treatment_plan_obj else ['Box Breathing (4-7-8)', 'Thought Reframing Journal']
+            mode_of_approach = treatment_plan_obj.title if treatment_plan_obj else (next_app.session_type if next_app else '')
+            diagnosis_val = treatment_plan_obj.diagnosis if treatment_plan_obj else ''
+            assigned_ex = treatment_plan_obj.assigned_exercises if treatment_plan_obj else []
             prescribed_meds = treatment_plan_obj.prescribed_medications if treatment_plan_obj else []
 
             patient_roster.append({

@@ -205,13 +205,13 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
   const [notice, setNotice] = useState('');
 
   // Treatment Plan & Mode of Approach Form state
-  const [selectedModeId, setSelectedModeId] = useState<string>('cbt');
-  const [treatmentTitle, setTreatmentTitle] = useState('Cognitive Behavioral Therapy (CBT)');
-  const [diagnosisInput, setDiagnosisInput] = useState('Workplace Stress & Mild Anxiety');
+  const [selectedModeId, setSelectedModeId] = useState<string>('');
+  const [treatmentTitle, setTreatmentTitle] = useState('');
+  const [diagnosisInput, setDiagnosisInput] = useState('');
   const [careNoteInput, setCareNoteInput] = useState('');
   const [goalsInput, setGoalsInput] = useState<string[]>([]);
   const [exercisesInput, setExercisesInput] = useState<string[]>([]);
-  const [medicationInput, setMedicationInput] = useState('Optional: Ashwagandha / Vitamin B-Complex');
+  const [medicationInput, setMedicationInput] = useState('');
   const [treatmentSubmitting, setTreatmentSubmitting] = useState(false);
   const [treatmentSaved, setTreatmentSaved] = useState(false);
 
@@ -352,21 +352,30 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
   const handleOpenPatientDrawer = (patient: any) => {
     setSelectedPatient(patient);
     setCareNoteInput(patient.care_notes || '');
-    setDiagnosisInput(patient.diagnosis || 'Workplace Stress & Mild Anxiety');
+    setDiagnosisInput(patient.diagnosis || '');
     
-    // Determine initial mode of approach from patient or default
-    const existingModeName = patient.mode_of_approach || patient.treatment_plan?.title || 'Cognitive Behavioral Therapy (CBT)';
+    // Determine initial mode of approach from patient or leave blank for doctor to choose
+    const existingModeName = patient.mode_of_approach || patient.treatment_plan?.title || '';
     const foundMode = MODES_OF_APPROACH.find(m => 
       m.name.toLowerCase() === existingModeName.toLowerCase() ||
       m.shortName.toLowerCase() === existingModeName.toLowerCase() ||
-      existingModeName.toLowerCase().includes(m.shortName.toLowerCase())
-    ) || MODES_OF_APPROACH[0];
+      (existingModeName && existingModeName.toLowerCase().includes(m.shortName.toLowerCase()))
+    );
 
-    setSelectedModeId(foundMode.id);
-    setTreatmentTitle(foundMode.name);
-    setGoalsInput(patient.wellness_goals?.length ? patient.wellness_goals : foundMode.defaultGoals);
-    setExercisesInput(patient.assigned_exercises?.length ? patient.assigned_exercises : foundMode.defaultExercises);
-    setMedicationInput(patient.prescribed_medications?.[0] || 'Optional: Herbal Tea / Rest Routines');
+    if (foundMode) {
+      setSelectedModeId(foundMode.id);
+      setTreatmentTitle(foundMode.name);
+    } else if (existingModeName) {
+      setSelectedModeId('custom');
+      setTreatmentTitle(existingModeName);
+    } else {
+      setSelectedModeId('');
+      setTreatmentTitle('');
+    }
+
+    setGoalsInput(patient.wellness_goals || []);
+    setExercisesInput(patient.assigned_exercises || []);
+    setMedicationInput(patient.prescribed_medications?.[0] || '');
     setTreatmentSaved(false);
   };
 
@@ -381,7 +390,8 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
     if (!selectedPatient) return;
     setTreatmentSubmitting(true);
 
-    const activeMode = MODES_OF_APPROACH.find(m => m.id === selectedModeId) || MODES_OF_APPROACH[0];
+    const activeMode = MODES_OF_APPROACH.find(m => m.id === selectedModeId);
+    const finalModeName = activeMode ? activeMode.name : (treatmentTitle.trim() || 'General Supportive Care');
 
     try {
       if (accessToken) {
@@ -393,13 +403,13 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
           },
           body: JSON.stringify({
             client_id: selectedPatient.id,
-            mode_of_approach: activeMode.name,
-            title: activeMode.name,
-            diagnosis: diagnosisInput,
+            mode_of_approach: finalModeName,
+            title: finalModeName,
+            diagnosis: diagnosisInput.trim(),
             primary_goals: goalsInput,
             assigned_exercises: exercisesInput,
-            prescribed_medications: medicationInput ? [medicationInput] : [],
-            care_notes: careNoteInput,
+            prescribed_medications: medicationInput.trim() ? [medicationInput.trim()] : [],
+            care_notes: careNoteInput.trim(),
           }),
         });
 
@@ -409,18 +419,19 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
             if (p.id === selectedPatient.id) {
               return {
                 ...p,
-                mode_of_approach: activeMode.name,
-                diagnosis: diagnosisInput,
-                care_notes: careNoteInput,
+                mode_of_approach: finalModeName,
+                diagnosis: diagnosisInput.trim(),
+                care_notes: careNoteInput.trim(),
                 assigned_exercises: exercisesInput,
                 wellness_goals: goalsInput,
+                prescribed_medications: medicationInput.trim() ? [medicationInput.trim()] : [],
               };
             }
             return p;
           }));
 
           setTreatmentSaved(true);
-          setNotice(`✔ Mode of Approach set to "${activeMode.name}" and Treatment Plan saved!`);
+          setNotice(`✔ Treatment Plan and Mode of Approach saved successfully!`);
           setTimeout(() => {
             setTreatmentSaved(false);
             setNotice('');
@@ -461,7 +472,8 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
   };
 
   const handleExportProgressReport = (patient: any) => {
-    const activeMode = MODES_OF_APPROACH.find(m => m.id === selectedModeId) || MODES_OF_APPROACH[0];
+    const activeMode = MODES_OF_APPROACH.find(m => m.id === selectedModeId);
+    const finalModeName = activeMode ? activeMode.name : (treatmentTitle.trim() || 'General Supportive Care');
     setNotice(`Generating clinical progress report for ${patient.full_name}...`);
     setTimeout(() => {
       const blob = new Blob(
@@ -474,19 +486,13 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
           `Occupation: ${patient.occupation || 'Not Specified'}\n\n` +
           `MODE OF THERAPEUTIC APPROACH:\n` +
           `-------------------------------\n` +
-          `Modality: ${activeMode.name}\n` +
-          `Core Focus: ${activeMode.tagline}\n` +
-          `Description: ${activeMode.description}\n\n` +
-          `PRIMARY TREATMENT GOALS:\n` +
-          goalsInput.map((g, i) => `${i + 1}. ${g}`).join('\n') + `\n\n` +
-          `ASSIGNED CLINICAL EXERCISES:\n` +
-          exercisesInput.map((e, i) => `${i + 1}. ${e}`).join('\n') + `\n\n` +
+          `Modality: ${finalModeName}\n\n` +
           `CLINICAL DIAGNOSIS / FOCUS:\n` +
-          `${diagnosisInput}\n\n` +
+          `${diagnosisInput || 'Not specified'}\n\n` +
           `SESSION PROGRESS NOTES:\n` +
-          `${careNoteInput || 'Patient demonstrating steady coping integration.'}\n\n` +
-          `SUPPORTIVE RECOMMENDATIONS & REMEDIES:\n` +
-          `${medicationInput || 'Restorative lifestyle practices & regular pacing'}\n`
+          `${careNoteInput || 'No session notes recorded yet.'}\n\n` +
+          `PRESCRIBED MEDICATION / RECOMMENDATIONS:\n` +
+          `${medicationInput || 'None prescribed.'}\n`
         ],
         { type: 'text/plain' }
       );
@@ -947,63 +953,48 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
                   <label className="text-xs font-bold text-slate-700 block flex items-center gap-1.5">
                     <Target className="w-3.5 h-3.5 text-[#0284c7]" /> Mode of Approach (Therapeutic Modality)
                   </label>
-                  <span className="text-[10px] text-sky-600 font-semibold">Active: {treatmentTitle}</span>
+                  {treatmentTitle && (
+                    <span className="text-[10px] text-sky-600 font-semibold truncate max-w-[200px]">
+                      Selected: {treatmentTitle}
+                    </span>
+                  )}
                 </div>
                 
                 <select
                   value={selectedModeId}
                   onChange={(e) => {
-                    const m = MODES_OF_APPROACH.find(item => item.id === e.target.value);
-                    if (m) handleSelectMode(m);
+                    const val = e.target.value;
+                    setSelectedModeId(val);
+                    if (val === 'custom') {
+                      setTreatmentTitle('');
+                    } else {
+                      const m = MODES_OF_APPROACH.find(item => item.id === val);
+                      if (m) {
+                        setTreatmentTitle(m.name);
+                        setGoalsInput(m.defaultGoals);
+                        setExercisesInput(m.defaultExercises);
+                      }
+                    }
                   }}
                   className="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:outline-none focus:border-[#0284c7] focus:bg-white text-slate-900 font-semibold"
                 >
+                  <option value="">-- Select Mode of Approach --</option>
                   {MODES_OF_APPROACH.map(m => (
                     <option key={m.id} value={m.id}>
                       {m.name} — {m.tagline}
                     </option>
                   ))}
+                  <option value="custom">✦ Custom / Write Other Mode of Approach</option>
                 </select>
 
-                {/* Modality Quick Pills */}
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {MODES_OF_APPROACH.map(m => {
-                    const isSelected = selectedModeId === m.id;
-                    return (
-                      <button
-                        type="button"
-                        key={m.id}
-                        onClick={() => handleSelectMode(m)}
-                        className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-[#0284c7] text-white border-[#0284c7] shadow-sm'
-                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-sky-50 hover:border-sky-200'
-                        }`}
-                      >
-                        {m.shortName}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Modality Description Banner */}
-                {selectedModeId && (
-                  <div className="p-2.5 rounded-xl bg-sky-50/60 border border-sky-100 text-[11px] text-slate-600 space-y-1">
-                    <div className="font-bold text-slate-800 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-[#0284c7]" />
-                      {MODES_OF_APPROACH.find(m => m.id === selectedModeId)?.tagline}
-                    </div>
-                    <p className="text-[10.5px] leading-relaxed">
-                      {MODES_OF_APPROACH.find(m => m.id === selectedModeId)?.description}
-                    </p>
-                    <div className="pt-1 flex flex-wrap gap-1">
-                      {exercisesInput.map((ex, i) => (
-                        <span key={i} className="text-[9.5px] px-1.5 py-0.5 rounded bg-white text-slate-700 border border-slate-200 font-medium">
-                          ✦ {ex}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                {(selectedModeId === 'custom' || (!MODES_OF_APPROACH.some(m => m.id === selectedModeId) && treatmentTitle)) && (
+                  <input
+                    type="text"
+                    value={treatmentTitle}
+                    onChange={(e) => setTreatmentTitle(e.target.value)}
+                    placeholder="Type custom mode of approach (e.g. Somatic Experiencing, Schema Therapy, Gestalt)..."
+                    className="w-full p-2.5 rounded-xl border border-sky-300 text-xs bg-sky-50/40 focus:outline-none focus:border-[#0284c7] focus:bg-white text-slate-900 font-medium mt-1"
+                  />
                 )}
               </div>
 
@@ -1014,7 +1005,7 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
                   type="text"
                   value={diagnosisInput}
                   onChange={(e) => setDiagnosisInput(e.target.value)}
-                  placeholder="e.g. Workplace Burnout & Generalized Anxiety"
+                  placeholder="Enter clinical diagnosis / primary focus..."
                   className="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:outline-none focus:border-[#0284c7] focus:bg-white text-slate-900"
                 />
               </div>
@@ -1026,7 +1017,7 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
                   rows={3}
                   value={careNoteInput}
                   onChange={(e) => setCareNoteInput(e.target.value)}
-                  placeholder="Record patient observations, cognitive shifts, and session takeaways..."
+                  placeholder="Write session progress notes, clinical observations, or care directives..."
                   className="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:outline-none focus:border-[#0284c7] focus:bg-white text-slate-900"
                 />
               </div>
@@ -1038,7 +1029,7 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
                   type="text"
                   value={medicationInput}
                   onChange={(e) => setMedicationInput(e.target.value)}
-                  placeholder="e.g. Sertraline 50mg (Morning)"
+                  placeholder="Enter prescribed medications or lifestyle recommendations (optional)..."
                   className="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:outline-none focus:border-[#0284c7] focus:bg-white text-slate-900"
                 />
               </div>
