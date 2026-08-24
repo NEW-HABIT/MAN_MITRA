@@ -59,7 +59,7 @@ export default function LoginPage() {
       setShowSplash(true);
 
       const profile = data.user.wellness_profile;
-      // Doctors and Admins skip patient onboarding intake
+      // Psychologists and Admins skip patient onboarding intake
       const targetPath = (data.user.role === 'user' && (!profile || !profile.onboarding_done)) 
         ? '/onboarding' 
         : '/dashboard';

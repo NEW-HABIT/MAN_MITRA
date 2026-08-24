@@ -108,7 +108,7 @@ export default function ProfilePanel() {
   const roleTitle = user.role === 'admin' 
     ? 'Executive Administrator' 
     : user.role === 'therapist' 
-    ? 'Wellness Specialist / Doctor' 
+    ? 'Wellness Specialist / Psychologist' 
     : 'Community Member';
 
   const roleBadgeColor = user.role === 'admin' 

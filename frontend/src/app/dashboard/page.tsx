@@ -32,7 +32,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, accessToken, logout, isAuthenticated } = useAuthStore();
   const [activeTab, setActiveTab] = useState<
-    'dashboard' | 'chat' | 'journal' | 'admin' | 'doctors' | 'members' | 'profile' |
+    'dashboard' | 'chat' | 'journal' | 'admin' | 'psychologists' | 'doctors' | 'members' | 'profile' |
     'ai_analytics' | 'crisis_monitoring' | 'clinical_insights' | 'content_mgmt' | 'platform_audit' | 'reports_export' |
     'assessments' | 'wellness_hub' | 'community' | 'booking'
   >('dashboard');
@@ -50,7 +50,7 @@ export default function DashboardPage() {
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const notifRef = useRef<HTMLDivElement>(null);
 
-  // Admin stats state & Doctor registration state
+  // Admin stats state & Psychologist registration state
   const [adminStats, setAdminStats] = useState<any | null>(null);
 
   const [addDoctorModalOpen, setAddDoctorModalOpen] = useState(false);
@@ -64,7 +64,7 @@ export default function DashboardPage() {
   const [docSubmitting, setDocSubmitting] = useState(false);
   const [docError, setDocError] = useState('');
 
-  // Edit Doctor Modal state
+  // Edit Psychologist Modal state
   const [editDoctorModalOpen, setEditDoctorModalOpen] = useState(false);
   const [editDocId, setEditDocId] = useState('');
   const [editDocName, setEditDocName] = useState('');
@@ -109,7 +109,7 @@ export default function DashboardPage() {
 
   const [resetStatus, setResetStatus] = useState('');
 
-  // Assign Patient to Doctor Modal state
+  // Assign Patient to Psychologist Modal state
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedClientForAssign, setSelectedClientForAssign] = useState('');
   const [selectedDoctorForAssign, setSelectedDoctorForAssign] = useState('');
@@ -144,14 +144,14 @@ export default function DashboardPage() {
 
       const data = await res.json();
       if (res.ok) {
-        setAssignSuccess(data.message || 'Patient successfully assigned to Doctor.');
+        setAssignSuccess(data.message || 'Patient successfully assigned to Psychologist.');
         fetchAdminStats();
         setTimeout(() => {
           setAssignModalOpen(false);
           setAssignSuccess('');
         }, 2000);
       } else {
-        setAssignError(data.error || 'Failed to assign patient to doctor.');
+        setAssignError(data.error || 'Failed to assign patient to psychologist.');
       }
     } catch (err: any) {
       setAssignError(err.message || 'Failed to connect to server.');
@@ -271,10 +271,10 @@ export default function DashboardPage() {
   };
 
   const handleOpenViewDetails = (account: any, defaultSubTab: 'info' | 'edit' | 'security' = 'info') => {
-    const isDoctor = !!(account.specialty || account.consultation_fee || account.max_capacity || account.role === 'therapist' || account.role === 'Doctor');
+    const isPsychologist = !!(account.specialty || account.consultation_fee || account.max_capacity || account.role === 'therapist' || account.role === 'Doctor' || account.role === 'Psychologist');
     const normalizedAccount = {
       ...account,
-      role: isDoctor ? 'therapist' : 'user'
+      role: isPsychologist ? 'therapist' : 'user'
     };
     setDetailsUser(normalizedAccount);
     setDetailsActiveSubTab(defaultSubTab);
@@ -317,15 +317,15 @@ export default function DashboardPage() {
         });
 
         if (res.ok) {
-          setDetailsStatusMsg('✔ Account details & security settings updated in real time!');
+          setDetailsStatusMsg('✔ Account updated successfully.');
           await fetchAdminStats();
           setTimeout(() => {
             setDetailsModalOpen(false);
             setDetailsStatusMsg('');
-          }, 1500);
+          }, 2000);
         } else {
           const data = await res.json();
-          setDetailsStatusMsg(`❌ ${data.error || 'Failed to update user account.'}`);
+          setDetailsStatusMsg(`❌ ${data.error || 'Failed to update account.'}`);
         }
       }
     } catch (e: any) {
@@ -426,7 +426,7 @@ export default function DashboardPage() {
       setNewDocFee('₹1,500 / 45 mins');
       await fetchAdminStats();
     } catch (err: any) {
-      setDocError(err.message || 'Error creating doctor account.');
+      setDocError(err.message || 'Error creating psychologist account.');
     } finally {
       setDocSubmitting(false);
     }
@@ -461,7 +461,7 @@ export default function DashboardPage() {
         alert(data.error || 'Failed to update specialist.');
       }
     } catch (e) {
-      console.error('Edit doctor error:', e);
+      console.error('Edit psychologist error:', e);
     } finally {
       setEditDocSubmitting(false);
     }
@@ -675,13 +675,13 @@ export default function DashboardPage() {
                 <button
                   onClick={() => { setActiveTab('members'); setMobileMenuOpen(false); }}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-                    activeTab === 'members' || activeTab === 'doctors'
+                    activeTab === 'members' || activeTab === 'doctors' || activeTab === 'psychologists'
                       ? 'bg-[#0284c7] text-white shadow-md shadow-sky-200'
                       : 'text-slate-600 hover:text-[#0284c7] hover:bg-sky-50/80'
                   }`}
                 >
                   <Users className="w-4 h-4" />
-                  User & Doctor Management
+                  User & Psychologist Management
                 </button>
 
                 <button
@@ -936,8 +936,8 @@ export default function DashboardPage() {
             <h2 className="text-lg sm:text-xl font-bold font-outfit capitalize text-slate-900">
               {activeTab === 'admin' 
                 ? 'Platform Summary & Overview' 
-                : activeTab === 'doctors' 
-                ? 'Guide Schedules & Care Team' 
+                : (activeTab === 'doctors' || activeTab === 'psychologists')
+                ? 'Psychologist Schedules & Care Team' 
                 : activeTab === 'members' 
                 ? 'User & Guide Accounts' 
                 : activeTab === 'ai_analytics'
@@ -981,7 +981,7 @@ export default function DashboardPage() {
               </button>
             )}
 
-            {/* ── Notification Bell (Admin + Doctor only) ───────────────── */}
+            {/* ── Notification Bell (Admin + Psychologist only) ───────────────── */}
             {(user.role === 'admin' || user.role === 'therapist') && (
               <div className="relative" ref={notifRef}>
                 {/* Emergency pulsing ring */}
@@ -1147,7 +1147,7 @@ export default function DashboardPage() {
         <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto bg-sky-50/30">
           <AnimatePresence mode="wait">
             
-            {/* ── TAB: WELLNESS DASHBOARD / DOCTOR WORKSPACE ───────────────── */}
+            {/* ── TAB: WELLNESS DASHBOARD / PSYCHOLOGIST WORKSPACE ─────────────── */}
             {activeTab === 'dashboard' && (
               user.role === 'therapist' ? (
                 <DoctorWorkspace accessToken={accessToken!} doctorName={user.full_name} />
@@ -1331,10 +1331,10 @@ export default function DashboardPage() {
               />
             )}
 
-            {/* ── TAB: DOCTORS WORKLOAD & ROSTER ────────────────────────────── */}
-            {activeTab === 'doctors' && user.role === 'admin' && (
+            {/* ── TAB: PSYCHOLOGISTS WORKLOAD & ROSTER ────────────────────────────── */}
+            {(activeTab === 'doctors' || activeTab === 'psychologists') && user.role === 'admin' && (
               <motion.div
-                key="doctors"
+                key="psychologists"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
@@ -1343,7 +1343,7 @@ export default function DashboardPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-xl font-bold font-outfit text-slate-900 flex items-center gap-2">
-                      <Stethoscope className="text-[#0284c7] w-6 h-6" /> Doctor & Specialist Roster Operations
+                      <Stethoscope className="text-[#0284c7] w-6 h-6" /> Psychologist & Specialist Roster Operations
                     </h3>
                     <p className="text-xs text-slate-500 mt-1">Real-time consultation capacity, active assignments, and rating metrics.</p>
                   </div>
@@ -1352,7 +1352,7 @@ export default function DashboardPage() {
                       onClick={() => setAssignModalOpen(true)}
                       className="px-4 py-2.5 rounded-xl text-xs font-bold bg-sky-50 text-[#0284c7] border border-sky-200 hover:bg-sky-100 transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
-                      <UserPlus className="w-4 h-4" /> Assign Patient to Doctor
+                      <UserPlus className="w-4 h-4" /> Assign Patient to Psychologist
                     </button>
                     <button
                       onClick={() => setAddDoctorModalOpen(true)}
@@ -1459,7 +1459,7 @@ export default function DashboardPage() {
                   <div className="p-12 text-center glass-panel rounded-3xl bg-white border border-sky-100 space-y-3">
                     <Stethoscope className="w-10 h-10 text-[#0284c7] mx-auto opacity-40" />
                     <h4 className="text-sm font-bold text-slate-800">No Specialist Accounts Registered</h4>
-                    <p className="text-xs text-slate-500 max-w-sm mx-auto">There are no doctor accounts registered in your database. Click "+ Add New Specialist" to create one.</p>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto">There are no psychologist accounts registered in your database. Click "+ Add New Specialist" to create one.</p>
                     <button
                       onClick={() => setAddDoctorModalOpen(true)}
                       className="glow-btn px-5 py-2.5 rounded-xl text-xs font-semibold mt-2 cursor-pointer"
@@ -1486,14 +1486,14 @@ export default function DashboardPage() {
                     <h3 className="text-xl font-bold font-outfit text-slate-900 flex items-center gap-2">
                       <Users className="text-[#0284c7] w-6 h-6" /> Directory & Account Management
                     </h3>
-                    <p className="text-xs text-slate-500 mt-1">Manage platform clients, doctors, and user accounts from one workspace.</p>
+                    <p className="text-xs text-slate-500 mt-1">Manage platform clients, psychologists, and user accounts from one workspace.</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setAssignModalOpen(true)}
                       className="px-4 py-2.5 rounded-xl text-xs font-bold bg-sky-50 text-[#0284c7] border border-sky-200 hover:bg-sky-100 transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
-                      <UserPlus className="w-4 h-4" /> Assign Patient to Doctor
+                      <UserPlus className="w-4 h-4" /> Assign Patient to Psychologist
                     </button>
                     <button
                       onClick={() => setAddMemberModalOpen(true)}
@@ -1527,7 +1527,7 @@ export default function DashboardPage() {
                       }`}
                     >
                       <Stethoscope className="w-4 h-4" />
-                      Doctors & Specialists ({adminStats?.doctors_workload?.length || 0})
+                      Psychologists & Specialists ({adminStats?.doctors_workload?.length || 0})
                     </button>
                   </div>
 
@@ -1625,11 +1625,11 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                {/* Sub-tab Content 2: Doctors Directory */}
+                {/* Sub-tab Content 2: Psychologists Directory */}
                 {directorySubTab === 'doctors' && (
                   <div className="glass-panel p-6 rounded-3xl bg-white border border-sky-100 shadow-sm space-y-4">
                     <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                      <Stethoscope className="w-4 h-4 text-[#0284c7]" /> Registered Doctors & Specialists Roster
+                      <Stethoscope className="w-4 h-4 text-[#0284c7]" /> Registered Psychologists & Specialists Roster
                     </h4>
                     {adminStats?.doctors_workload && adminStats.doctors_workload.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1675,7 +1675,7 @@ export default function DashboardPage() {
                                   <button
                                     onClick={() => handleDeleteUser(doc.id, doc.name)}
                                     className="p-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
-                                    title="Delete Doctor"
+                                    title="Delete Psychologist"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
@@ -1687,7 +1687,7 @@ export default function DashboardPage() {
                       </div>
                     ) : (
                       <div className="py-12 text-center text-xs text-slate-500">
-                        No doctor accounts registered in database yet. Click "+ Add New Member" above to create a doctor account.
+                        No psychologist accounts registered in database yet. Click "+ Add New Member" above to create a psychologist account.
                       </div>
                     )}
                   </div>
@@ -1725,7 +1725,7 @@ export default function DashboardPage() {
                     <Stethoscope className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">Add New Doctor / Specialist</h3>
+                    <h3 className="text-base font-bold text-slate-900">Add New Psychologist / Specialist</h3>
                     <p className="text-xs text-slate-500">Register a specialist account in database.</p>
                   </div>
                 </div>
@@ -1857,7 +1857,7 @@ export default function DashboardPage() {
                   <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                     <Stethoscope className="w-5 h-5 text-[#0284c7]" /> Edit Specialist Details & Fee
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Update consultation fee and doctor info in real time.</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Update consultation fee and psychologist info in real time.</p>
                 </div>
                 <button
                   onClick={() => setEditDoctorModalOpen(false)}
@@ -1943,7 +1943,7 @@ export default function DashboardPage() {
 
 
 
-      {/* ── UNIFIED ADD MEMBER MODAL OVERLAY (DOCTOR OR CLIENT) ─────────── */}
+      {/* ── UNIFIED ADD MEMBER MODAL OVERLAY (PSYCHOLOGIST OR CLIENT) ─────────── */}
       <AnimatePresence>
         {addMemberModalOpen && (
           <motion.div
@@ -1965,7 +1965,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-slate-900">Add New Directory Member</h3>
-                    <p className="text-xs text-slate-500">Register a new client or doctor account in database.</p>
+                    <p className="text-xs text-slate-500">Register a new client or psychologist account in database.</p>
                   </div>
                 </div>
                 <button
@@ -1983,7 +1983,7 @@ export default function DashboardPage() {
               )}
 
               <form onSubmit={handleCreateMember} className="space-y-4 text-xs">
-                {/* Account Type Selection (Client vs Doctor) */}
+                {/* Account Type Selection (Client vs Psychologist) */}
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1.5">Select Account Role</label>
                   <div className="grid grid-cols-2 gap-2 p-1 bg-sky-50 rounded-2xl border border-sky-100">
@@ -2007,7 +2007,7 @@ export default function DashboardPage() {
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
-                      <Stethoscope className="w-3.5 h-3.5" /> Doctor / Specialist
+                      <Stethoscope className="w-3.5 h-3.5" /> Psychologist / Specialist
                     </button>
                   </div>
                 </div>
@@ -2085,7 +2085,7 @@ export default function DashboardPage() {
                     disabled={memberSubmitting}
                     className="glow-btn px-5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer disabled:opacity-50"
                   >
-                    {memberSubmitting ? 'Creating...' : `Register ${newMemberRole === 'therapist' ? 'Doctor' : 'Client'}`}
+                    {memberSubmitting ? 'Creating...' : `Register ${newMemberRole === 'therapist' ? 'Psychologist' : 'Client'}`}
                   </button>
                 </div>
               </form>
@@ -2094,7 +2094,7 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* ── ASSIGN PATIENT TO DOCTOR MODAL OVERLAY ───────────────────────── */}
+      {/* ── ASSIGN PATIENT TO PSYCHOLOGIST MODAL OVERLAY ───────────────────────── */}
       <AnimatePresence>
         {assignModalOpen && (
           <motion.div
@@ -2112,7 +2112,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between border-b border-sky-100 pb-4">
                 <div>
                   <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    <UserPlus className="w-5 h-5 text-[#0284c7]" /> Assign Patient to Doctor
+                    <UserPlus className="w-5 h-5 text-[#0284c7]" /> Assign Patient to Psychologist
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">Schedule consultation session & link care roster.</p>
                 </div>
@@ -2155,14 +2155,14 @@ export default function DashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Select Doctor / Specialist</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Select Psychologist / Specialist</label>
                   <select
                     required
                     value={selectedDoctorForAssign}
                     onChange={(e) => setSelectedDoctorForAssign(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7] bg-white text-slate-900"
                   >
-                    <option value="">-- Choose Doctor Specialist --</option>
+                    <option value="">-- Choose Psychologist Specialist --</option>
                     {(adminStats?.doctors_workload || []).map((doc: any) => (
                       <option key={doc.id} value={doc.id}>
                         {doc.name} - {doc.specialty}
@@ -2338,7 +2338,7 @@ export default function DashboardPage() {
                           ? 'bg-purple-50 text-purple-700 border-purple-200'
                           : 'bg-sky-50 text-[#0284c7] border-sky-200'
                       }`}>
-                        {(detailsUser.role === 'therapist' || detailsUser.role === 'Doctor') ? '🩺 Specialist Doctor' : '👤 Client Member'}
+                        {(detailsUser.role === 'therapist' || detailsUser.role === 'Doctor' || detailsUser.role === 'Psychologist') ? '🩺 Specialist Psychologist' : '👤 Client Member'}
                       </span>
                     </h3>
                     <p className="text-xs text-slate-500">{detailsUser.email}</p>
@@ -2404,10 +2404,10 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <span className="text-slate-500 block font-medium">
-                        {(detailsUser.role === 'therapist' || detailsUser.role === 'Doctor') ? 'Consultation Fee' : 'Assigned Specialist'}
+                        {(detailsUser.role === 'therapist' || detailsUser.role === 'Doctor' || detailsUser.role === 'Psychologist') ? 'Consultation Fee' : 'Assigned Specialist'}
                       </span>
-                      <span className={`font-bold ${(detailsUser.role === 'therapist' || detailsUser.role === 'Doctor') ? 'text-emerald-700' : 'text-[#0284c7]'}`}>
-                        {(detailsUser.role === 'therapist' || detailsUser.role === 'Doctor')
+                      <span className={`font-bold ${(detailsUser.role === 'therapist' || detailsUser.role === 'Doctor' || detailsUser.role === 'Psychologist') ? 'text-emerald-700' : 'text-[#0284c7]'}`}>
+                        {(detailsUser.role === 'therapist' || detailsUser.role === 'Doctor' || detailsUser.role === 'Psychologist')
                           ? (detailsUser.consultation_fee || '₹1,500 / 45 mins')
                           : (detailsUser.assigned_doctor || 'Dr. Sarah Smith (Clinical Psychologist)')}
                       </span>
@@ -2491,7 +2491,7 @@ export default function DashboardPage() {
                     />
                   </div>
 
-                  {(detailsUser.role === 'therapist' || detailsUser.role === 'Doctor') ? (
+                  {(detailsUser.role === 'therapist' || detailsUser.role === 'Doctor' || detailsUser.role === 'Psychologist') ? (
                     <div>
                       <label className="block text-slate-700 font-bold mb-1">Consultation Fee</label>
                       <input
@@ -2505,7 +2505,7 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <div>
-                      <label className="block text-slate-700 font-bold mb-1">Assigned Specialist Doctor</label>
+                      <label className="block text-slate-700 font-bold mb-1">Assigned Specialist Psychologist</label>
                       <div className="w-full px-4 py-2.5 rounded-xl bg-sky-50 border border-sky-200 font-bold text-[#0284c7] flex items-center justify-between">
                         <span>{detailsUser.assigned_doctor || 'Dr. Sarah Smith (Clinical Psychologist)'}</span>
                         <button
@@ -2513,7 +2513,7 @@ export default function DashboardPage() {
                           onClick={() => { setDetailsModalOpen(false); setAssignModalOpen(true); }}
                           className="text-[11px] underline text-[#0284c7] font-semibold cursor-pointer"
                         >
-                          Reassign Doctor
+                          Reassign Psychologist
                         </button>
                       </div>
                     </div>

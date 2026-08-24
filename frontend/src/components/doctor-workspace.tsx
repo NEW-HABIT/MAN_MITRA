@@ -16,7 +16,10 @@ interface DoctorWorkspaceProps {
   doctorName: string;
 }
 
+export type PsychologistWorkspaceProps = DoctorWorkspaceProps;
+
 export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorkspaceProps) {
+  const psychologistName = doctorName;
   const [activeTab, setActiveTab] = useState<'patients' | 'schedule' | 'treatment' | 'crisis'>('patients');
   const [patients, setPatients] = useState<any[]>([]);
   const [schedule, setSchedule] = useState<any[]>([]);
@@ -141,10 +144,10 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
   };
 
   useEffect(() => {
-    fetchDoctorData();
+    fetchPsychologistData();
   }, [accessToken]);
 
-  const fetchDoctorData = async () => {
+  const fetchPsychologistData = async () => {
     setLoading(true);
     try {
       const resPatients = await fetch(`${API_URL}/api/auth/therapist/patients/`, {
@@ -163,7 +166,7 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
         setSchedule(Array.isArray(sData) ? sData : []);
       }
     } catch (e) {
-      console.error('Failed to fetch doctor data:', e);
+      console.error('Failed to fetch psychologist data:', e);
     } finally {
       setLoading(false);
     }
@@ -241,7 +244,7 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
         [
           `MANMITRA CLINICAL PROGRESS REPORT\n` +
           `Date: ${new Date().toLocaleDateString()}\n` +
-          `Doctor: ${doctorName}\n` +
+          `Psychologist: ${psychologistName}\n` +
           `Patient: ${patientName}\n` +
           `Diagnosis: ${diagnosisInput}\n` +
           `Clinical Notes: ${careNoteInput || 'Patient showing steady improvement in daily coping.'}\n` +
@@ -261,15 +264,15 @@ export default function DoctorWorkspace({ accessToken, doctorName }: DoctorWorks
 
   return (
     <div className="space-y-6 text-left pb-12">
-      {/* Doctor Header Bar */}
+      {/* Psychologist Header Bar */}
       <div className="glass-panel p-6 rounded-3xl bg-white border border-sky-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-[#0284c7]/10 text-[#0284c7] border border-sky-200 flex items-center justify-center font-bold text-xl font-outfit">
-            {doctorName.replace('Dr. ', '').charAt(0)}
+            {psychologistName.replace('Dr. ', '').charAt(0)}
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xl font-bold font-outfit text-slate-900">{doctorName}</h2>
+              <h2 className="text-xl font-bold font-outfit text-slate-900">{psychologistName}</h2>
               <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${
                 dutyStatus === 'Available' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                 dutyStatus === 'In Session' ? 'bg-sky-50 text-[#0284c7] border-sky-200' :

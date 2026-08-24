@@ -58,11 +58,11 @@ export default function AdminAnalyticsSuite({
         ['Total Registered Users', String(adminStats?.total_users ?? 2), 'Active Patient Accounts', '2', 'Platform', 'ManMitra']
       ];
 
-    } else if (slug.includes('doctor_performance') || slug.includes('ratings')) {
+    } else if (slug.includes('doctor_performance') || slug.includes('psychologist_performance') || slug.includes('ratings')) {
       rows = [
-        ['Doctor Name', 'Specialty', 'Email Address', 'Active Patients', 'Rating', 'Duty Status', 'Consultation Fee'],
+        ['Psychologist Name', 'Specialty', 'Email Address', 'Active Patients', 'Rating', 'Duty Status', 'Consultation Fee'],
         ...(adminStats?.doctors_workload?.map((doc: any) => [
-          doc.full_name || doc.name || 'Doctor',
+          doc.full_name || doc.name || 'Psychologist',
           doc.specialty || 'Clinical Psychology',
           doc.email || 'N/A',
           String(doc.active_patients ?? 15),
@@ -70,10 +70,10 @@ export default function AdminAnalyticsSuite({
           doc.status || doc.duty_status || 'On Duty',
           `₹${doc.consultation_fee || 1500}`
         ]) || [
-          ['Dr. Sarah Smith', 'Clinical Psychologist & CBT Specialist', 'doctor@manmitra.ai', '15 Patients', '4.9 ★', 'On Duty', '₹1,500']
+          ['Dr. Sarah Smith', 'Clinical Psychologist & CBT Specialist', 'psychologist@manmitra.ai', '15 Patients', '4.9 ★', 'On Duty', '₹1,500']
         ]),
         ['--- SUMMARY ---', '---', '---', '---', '---', '---', '---'],
-        ['Total Active Doctors', String(adminStats?.active_doctors ?? 1), 'Avg Rating', '4.9 ★', 'Platform', 'ManMitra', timestamp]
+        ['Total Active Psychologists', String(adminStats?.active_doctors ?? 1), 'Avg Rating', '4.9 ★', 'Platform', 'ManMitra', timestamp]
       ];
 
     } else if (slug.includes('financial') || slug.includes('revenue') || slug.includes('subscriptions')) {
@@ -124,7 +124,7 @@ export default function AdminAnalyticsSuite({
       rows = [
         ['Metric', 'Value', 'Generated On'],
         ['Total Registered Users', String(adminStats?.total_users ?? 0), timestamp],
-        ['Active Doctors', String(adminStats?.active_doctors ?? 0), timestamp],
+        ['Active Psychologists', String(adminStats?.active_doctors ?? 0), timestamp],
         ['Total Appointments', String(adminStats?.total_appointments ?? 0), timestamp],
         ['Monthly Revenue', String(adminStats?.monthly_revenue ?? '₹0'), timestamp],
         ['Report Name', reportName, timestamp],
@@ -336,7 +336,7 @@ export default function AdminAnalyticsSuite({
 
             <div className="glass-panel p-5 rounded-3xl bg-white border border-sky-100 shadow-sm space-y-2">
               <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
-                <span>Verified Doctors</span>
+                <span>Verified Psychologists</span>
                 <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
                   <Stethoscope className="w-4 h-4" />
                 </div>
@@ -524,7 +524,7 @@ export default function AdminAnalyticsSuite({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               { name: 'User Growth & Demographic Report', type: 'Users' },
-              { name: 'Doctor Performance & Ratings Report', type: 'Doctors' },
+              { name: 'Psychologist Performance & Ratings Report', type: 'Psychologists' },
               { name: 'Financial Revenue & Subscriptions Report', type: 'Revenue' },
               { name: 'AI Chatbot & Telemetry Report', type: 'AI' },
               { name: 'Appointment & Consultation Audit', type: 'Appointments' },

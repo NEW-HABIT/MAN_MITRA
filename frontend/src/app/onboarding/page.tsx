@@ -13,7 +13,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // Redirect if not logged in or if user is a Doctor/Admin
+  // Redirect if not logged in or if user is a Psychologist/Admin
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/auth/login');

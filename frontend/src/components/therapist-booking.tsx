@@ -13,7 +13,7 @@ interface TherapistBookingProps {
   onBookingSuccess?: () => void;
 }
 
-const DOCTORS_LIST = [
+const PSYCHOLOGISTS_LIST = [
   {
     id: 'doc-1',
     name: 'Dr. Ananya Roy, Ph.D.',
@@ -29,19 +29,19 @@ const DOCTORS_LIST = [
   {
     id: 'doc-2',
     name: 'Dr. Vikram Malhotra, M.D.',
-    title: 'Consultant Psychiatrist',
+    title: 'Consultant Clinical Psychologist',
     rating: 4.8,
     reviewsCount: 98,
     experienceYears: 15,
     fee: '₹2,000 / 45 mins',
     specialties: ['Depression Management', 'Sleep Disorders', 'Psychopharmacology'],
     availability: ['11:00 AM - 11:45 AM', '03:00 PM - 03:45 PM'],
-    bio: 'Experienced psychiatrist focusing on comprehensive diagnostic assessments, medical treatment planning, and holistic therapy integration.'
+    bio: 'Experienced psychologist focusing on comprehensive diagnostic assessments, mindfulness treatment planning, and holistic therapy integration.'
   },
   {
     id: 'doc-3',
     name: 'Dr. Meera Sen, M.Sc.',
-    title: 'Mindfulness & Trauma Counselor',
+    title: 'Mindfulness & Trauma Psychologist',
     rating: 5.0,
     reviewsCount: 86,
     experienceYears: 9,
@@ -53,10 +53,10 @@ const DOCTORS_LIST = [
 ];
 
 export default function TherapistBooking({ accessToken, onBookingSuccess }: TherapistBookingProps) {
-  const [doctors, setDoctors] = useState<any[]>(DOCTORS_LIST);
+  const [psychologists, setPsychologists] = useState<any[]>(PSYCHOLOGISTS_LIST);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('All');
-  const [selectedDoctor, setSelectedDoctor] = useState<any | null>(null);
+  const [selectedPsychologist, setSelectedPsychologist] = useState<any | null>(null);
   
   // Booking Form State
   const [selectedSlot, setSelectedSlot] = useState('');
@@ -67,24 +67,24 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
   const [notice, setNotice] = useState('');
 
   useEffect(() => {
-    fetchLiveDoctors();
+    fetchLivePsychologists();
   }, []);
 
-  const fetchLiveDoctors = async () => {
+  const fetchLivePsychologists = async () => {
     try {
       const res = await fetch(`${API_URL}/api/auth/doctors/public/`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          setDoctors(data);
+          setPsychologists(data);
         }
       }
     } catch (e) {
-      console.error('Failed to fetch live doctors:', e);
+      console.error('Failed to fetch live psychologists:', e);
     }
   };
 
-  const filteredDoctors = doctors.filter(doc => {
+  const filteredPsychologists = psychologists.filter(doc => {
     const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase()) || doc.specialties.some((s: string) => s.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesSpec = selectedSpecialty === 'All' || doc.specialties.includes(selectedSpecialty);
     return matchesSearch && matchesSpec;
@@ -94,7 +94,7 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
     setIsSubmitting(true);
 
     try {
-      if (accessToken && selectedDoctor) {
+      if (accessToken && selectedPsychologist) {
         const res = await fetch(`${API_URL}/api/auth/admin/assign-patient/`, {
           method: 'POST',
           headers: {
@@ -102,8 +102,8 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
             'Authorization': `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
-            doctor_id: selectedDoctor.id,
-            time_slot: selectedSlot || selectedDoctor.availability[0],
+            doctor_id: selectedPsychologist.id,
+            time_slot: selectedSlot || selectedPsychologist.availability[0],
             session_type: selectedSessionType,
             meeting_type: selectedMeetingType,
           }),
@@ -124,11 +124,11 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
       <div className="p-6 rounded-3xl bg-slate-900 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-slate-800">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sky-400 font-bold text-xs uppercase tracking-wider">
-            <Stethoscope className="w-4 h-4 text-sky-400" /> Verified Clinical Specialists
+            <Stethoscope className="w-4 h-4 text-sky-400" /> Verified Clinical Psychologists
           </div>
-          <h2 className="text-2xl font-extrabold font-outfit text-white">Connect with a Wellness Guide</h2>
+          <h2 className="text-2xl font-extrabold font-outfit text-white">Connect with a Psychologist</h2>
           <p className="text-sm text-slate-300 font-normal max-w-xl leading-relaxed">
-            Book warm, confidential 1-on-1 sessions with verified wellness guides and specialists.
+            Book warm, confidential 1-on-1 sessions with verified clinical psychologists and wellness guides.
           </p>
         </div>
       </div>
@@ -139,7 +139,7 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input
             type="text"
-            placeholder="Search guide by name or area of focus..."
+            placeholder="Search psychologist by name or area of focus..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 rounded-xl text-xs bg-slate-50 border border-slate-200 focus:outline-none focus:border-sky-400"
@@ -161,17 +161,17 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
         </div>
       </div>
 
-      {/* Doctor Grid */}
+      {/* Psychologist Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {filteredDoctors.map(doc => (
+        {filteredPsychologists.map(doc => (
           <motion.div key={doc.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-5 rounded-3xl bg-white border border-sky-100 shadow-sm space-y-4 flex flex-col justify-between">
             <div className="space-y-3">
               <div className="flex items-start justify-between">
                 <div className="w-12 h-12 rounded-2xl bg-sky-100 text-[#0284c7] font-bold text-lg flex items-center justify-center font-outfit">
-                  {doc.name.split(' ')[1]?.[0] || 'D'}
+                  {doc.name.split(' ')[1]?.[0] || 'P'}
                 </div>
                 <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" /> Verified Specialist
+                  <ShieldCheck className="w-3 h-3" /> Verified Psychologist
                 </span>
               </div>
 
@@ -202,7 +202,7 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
               <span className="text-xs font-bold text-slate-900">{doc.fee}</span>
               <button
-                onClick={() => { setSelectedDoctor(doc); setSelectedSlot(doc.availability[0]); setBookingStep('details'); }}
+                onClick={() => { setSelectedPsychologist(doc); setSelectedSlot(doc.availability[0]); setBookingStep('details'); }}
                 className="px-4 py-2 rounded-xl bg-[#0284c7] hover:bg-sky-600 text-white text-xs font-bold"
               >
                 Book Session
@@ -213,10 +213,10 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
       </div>
 
       {/* Booking Modal */}
-      {selectedDoctor && (
+      {selectedPsychologist && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl relative">
-            <button onClick={() => setSelectedDoctor(null)} className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:bg-slate-100">
+            <button onClick={() => setSelectedPsychologist(null)} className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:bg-slate-100">
               <X className="w-4 h-4" />
             </button>
 
@@ -224,14 +224,14 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
               <div className="space-y-4">
                 <div>
                   <span className="text-[11px] font-bold text-sky-600 uppercase">Guided Session Booking</span>
-                  <h3 className="text-base font-bold text-slate-900 font-outfit">{selectedDoctor.name}</h3>
-                  <p className="text-xs text-slate-500">{selectedDoctor.title}</p>
+                  <h3 className="text-base font-bold text-slate-900 font-outfit">{selectedPsychologist.name}</h3>
+                  <p className="text-xs text-slate-500">{selectedPsychologist.title}</p>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-700 block">Select Available Time Slot</label>
                   <div className="space-y-1.5">
-                    {selectedDoctor.availability.map((slot: string) => (
+                    {selectedPsychologist.availability.map((slot: string) => (
                       <button
                         key={slot}
                         onClick={() => setSelectedSlot(slot)}
@@ -262,7 +262,7 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
 
                 <div className="p-3 rounded-xl bg-slate-50 border flex items-center justify-between text-xs">
                   <span className="text-slate-600">Consultation Fee</span>
-                  <span className="font-bold text-slate-900">{selectedDoctor.fee}</span>
+                  <span className="font-bold text-slate-900">{selectedPsychologist.fee}</span>
                 </div>
 
                 <button
@@ -279,8 +279,8 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
                 <h3 className="text-base font-bold text-slate-900 font-outfit">Simulated Checkout</h3>
                 <div className="p-4 rounded-2xl bg-sky-50 border border-sky-100 text-xs space-y-1">
                   <div className="flex justify-between font-bold text-slate-900">
-                    <span>{selectedDoctor.name}</span>
-                    <span>{selectedDoctor.fee}</span>
+                    <span>{selectedPsychologist.name}</span>
+                    <span>{selectedPsychologist.fee}</span>
                   </div>
                   <div className="text-slate-500">{selectedSlot} • {selectedSessionType}</div>
                 </div>
@@ -310,9 +310,9 @@ export default function TherapistBooking({ accessToken, onBookingSuccess }: Ther
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-lg font-bold text-slate-900 font-outfit">Session Confirmed!</h3>
-                  <p className="text-xs text-slate-500">Your appointment with {selectedDoctor.name} is scheduled for {selectedSlot}.</p>
+                  <p className="text-xs text-slate-500">Your appointment with {selectedPsychologist.name} is scheduled for {selectedSlot}.</p>
                 </div>
-                <button onClick={() => setSelectedDoctor(null)} className="px-6 py-2.5 rounded-xl bg-[#0284c7] text-white text-xs font-bold">
+                <button onClick={() => setSelectedPsychologist(null)} className="px-6 py-2.5 rounded-xl bg-[#0284c7] text-white text-xs font-bold">
                   Done
                 </button>
               </div>
