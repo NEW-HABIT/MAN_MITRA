@@ -1339,10 +1339,20 @@ class AdminAssignPatientView(APIView):
             status=Appointment.Status.UPCOMING
         )
 
+        TreatmentPlan.objects.update_or_create(
+            doctor=doctor,
+            client=client,
+            defaults={
+                'title': session_type,
+                'diagnosis': 'Clinical Care & Supportive Guidance',
+                'status': 'Active'
+            }
+        )
+
         DoctorCareNote.objects.get_or_create(
             doctor=doctor,
             client=client,
-            defaults={'content': f'Assigned patient {client.full_name} to {doctor.full_name} by Administrator.'}
+            defaults={'content': f'Assigned patient {client.full_name} to {doctor.full_name} with Mode of Approach: {session_type}.'}
         )
 
         return Response({
@@ -1351,6 +1361,7 @@ class AdminAssignPatientView(APIView):
             'doctor_name': doctor.full_name,
             'client_name': client.full_name,
             'time_slot': appointment.time_slot,
+            'mode_of_approach': session_type,
         }, status=status.HTTP_201_CREATED)
 
 
@@ -1358,7 +1369,7 @@ class TherapistPatientsView(APIView):
     """
     GET /api/auth/therapist/patients/
     Returns list of assigned patients/clients for the authenticated doctor,
-    including gathered telemetry (mood history, stress level, wellness goals, and care notes) queried 100% from database.
+    including gathered telemetry (mood history, stress level, wellness goals, mode of approach, and care notes).
     """
     permission_classes = [permissions.IsAuthenticated]
 
@@ -1397,6 +1408,13 @@ class TherapistPatientsView(APIView):
             next_app = Appointment.objects.filter(client=c, status=Appointment.Status.UPCOMING).first()
             next_app_str = f'Today at {next_app.time_slot.split(" ")[0]}' if next_app else 'No upcoming session'
 
+            # Query treatment plan and mode of approach
+            treatment_plan_obj = TreatmentPlan.objects.filter(client=c).order_by('-created_at').first()
+            mode_of_approach = treatment_plan_obj.title if treatment_plan_obj else (next_app.session_type if next_app else 'Cognitive Behavioral Therapy (CBT)')
+            diagnosis_val = treatment_plan_obj.diagnosis if treatment_plan_obj else 'Workplace Stress & Mild Anxiety'
+            assigned_ex = treatment_plan_obj.assigned_exercises if treatment_plan_obj else ['Box Breathing (4-7-8)', 'Thought Reframing Journal']
+            prescribed_meds = treatment_plan_obj.prescribed_medications if treatment_plan_obj else []
+
             patient_roster.append({
                 'id': str(c.id),
                 'full_name': c.full_name,
@@ -1411,6 +1429,10 @@ class TherapistPatientsView(APIView):
                 'total_journals_logged': journal_cnt,
                 'next_consultation': next_app_str,
                 'care_notes': care_notes_content,
+                'mode_of_approach': mode_of_approach,
+                'diagnosis': diagnosis_val,
+                'assigned_exercises': assigned_ex,
+                'prescribed_medications': prescribed_meds,
             })
 
         return Response(patient_roster, status=status.HTTP_200_OK)
@@ -1752,22 +1774,34 @@ class TreatmentPlanView(APIView):
         except User.DoesNotExist:
             return Response({'error': 'Client not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        plan = TreatmentPlan.objects.create(
+        mode_val = request.data.get('mode_of_approach') or request.data.get('title') or 'Cognitive Behavioral Therapy (CBT)'
+        plan, _ = TreatmentPlan.objects.update_or_create(
             doctor=request.user,
             client=client,
-            title=request.data.get('title', 'Personalized CBT & Wellness Plan'),
-            diagnosis=request.data.get('diagnosis', 'Mild Anxiety & Work Stress'),
-            primary_goals=request.data.get('primary_goals', ['Reduce anxiety', 'Improve sleep quality']),
-            assigned_exercises=request.data.get('assigned_exercises', ['4-7-8 Breathing (Daily 10m)', 'Journaling']),
-            prescribed_medications=request.data.get('prescribed_medications', []),
-            cbt_activities=request.data.get('cbt_activities', ['Thought Reframing Worksheet']),
-            status=request.data.get('status', 'Active'),
+            defaults={
+                'title': mode_val,
+                'diagnosis': request.data.get('diagnosis', 'Mild Anxiety & Work Stress'),
+                'primary_goals': request.data.get('primary_goals', ['Reduce anxiety', 'Improve sleep quality']),
+                'assigned_exercises': request.data.get('assigned_exercises', ['4-7-8 Breathing (Daily 10m)', 'Journaling']),
+                'prescribed_medications': request.data.get('prescribed_medications', []),
+                'cbt_activities': request.data.get('cbt_activities', ['Thought Reframing Worksheet']),
+                'status': request.data.get('status', 'Active'),
+            }
         )
+
+        care_notes = request.data.get('care_notes')
+        if care_notes:
+            DoctorCareNote.objects.update_or_create(
+                doctor=request.user,
+                client=client,
+                defaults={'content': care_notes}
+            )
 
         return Response({
             'message': 'Treatment plan successfully issued.',
             'id': str(plan.id),
             'client_name': client.full_name,
+            'mode_of_approach': plan.title,
         }, status=status.HTTP_201_CREATED)
 
 

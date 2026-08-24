@@ -2186,14 +2186,21 @@ export default function DashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Session Protocol & Category</label>
-                  <input
-                    type="text"
-                    required
+                  <label className="block text-slate-700 font-semibold mb-1">Mode of Approach (Therapeutic Modality)</label>
+                  <select
                     value={assignSessionType}
                     onChange={(e) => setAssignSessionType(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7]"
-                  />
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0284c7] bg-white text-slate-900 font-medium"
+                  >
+                    <option value="Cognitive Behavioral Therapy (CBT)">Cognitive Behavioral Therapy (CBT) — Thought Reframing</option>
+                    <option value="Mindfulness-Based Stress Reduction (MBSR)">Mindfulness-Based Stress Reduction (MBSR) — Grounding & Breath</option>
+                    <option value="Acceptance & Commitment Therapy (ACT)">Acceptance & Commitment Therapy (ACT) — Values & Defusion</option>
+                    <option value="Dialectical Behavior Therapy (DBT)">Dialectical Behavior Therapy (DBT) — Distress Tolerance</option>
+                    <option value="Solution-Focused Brief Therapy (SFBT)">Solution-Focused Brief Therapy (SFBT) — Practical Goals</option>
+                    <option value="Person-Centered / Humanistic Therapy">Person-Centered / Humanistic Therapy — Self-Worth & Validation</option>
+                    <option value="Insight & Psychodynamic Therapy">Insight & Psychodynamic Therapy — Core Relational Patterns</option>
+                    <option value="Holistic & Integrative Mental Wellness">Holistic & Integrative Mental Wellness — Bio-Psycho-Social</option>
+                  </select>
                 </div>
 
                 <div className="pt-2 flex items-center justify-end gap-3">
