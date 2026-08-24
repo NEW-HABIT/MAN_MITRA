@@ -357,7 +357,7 @@ export default function OnboardingPage() {
                   onClick={handleComplete}
                   className="flex-1 glow-btn py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  {loading ? 'Setting up wellness space...' : 'Start Wellness Journey'}
+                  {loading ? 'Setting up your profile...' : 'Start Wellness Journey'}
                   {!loading && <ShieldCheck className="w-4 h-4 text-white" />}
                 </button>
               </div>

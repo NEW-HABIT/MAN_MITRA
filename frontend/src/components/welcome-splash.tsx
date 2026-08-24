@@ -124,7 +124,7 @@ export default function WelcomeSplash({ userName, subtitle, onDismiss }: Welcome
             {userName ? `Welcome back, ${userName}!` : 'Welcome to Your Wellness Journey'}
           </h3>
           <p className="text-sm md:text-base text-slate-600 font-medium max-w-md mx-auto leading-relaxed">
-            {subtitle || 'Entering your private mental wellness space...'}
+            {subtitle || 'Entering your private sanctuary...'}
           </p>
         </motion.div>
 
@@ -143,7 +143,7 @@ export default function WelcomeSplash({ userName, subtitle, onDismiss }: Welcome
           />
         </motion.div>
 
-        {/* Security / Wellness Space Badge */}
+        {/* Security Badge */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -152,7 +152,7 @@ export default function WelcomeSplash({ userName, subtitle, onDismiss }: Welcome
         >
           <Compass className="w-4 h-4 text-[#0284c7] animate-spin [animation-duration:10s]" />
           <ShieldCheck className="w-4 h-4 text-[#0284c7]" />
-          <span>Wellness Space Ready</span>
+          <span>Sanctuary Ready</span>
         </motion.div>
 
       </div>

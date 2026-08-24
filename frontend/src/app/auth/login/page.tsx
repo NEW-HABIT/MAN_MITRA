@@ -115,7 +115,7 @@ export default function LoginPage() {
             ManMitra
           </Link>
           <h2 className="text-2xl font-bold text-slate-900">Welcome back</h2>
-          <p className="text-xs text-slate-500 mt-1">Enter your wellness space to reflect and chat.</p>
+          <p className="text-xs text-slate-500 mt-1">Sign in to access your dashboard and daily care.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -187,7 +187,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full glow-btn py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 mt-6 cursor-pointer"
           >
-            {loading ? 'Entering wellness space...' : 'Sign In'}
+            {loading ? 'Signing In...' : 'Sign In'}
             {!loading && <ArrowRight className="w-4 h-4 text-white" />}
           </button>
         </form>

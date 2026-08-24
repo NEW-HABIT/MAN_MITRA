@@ -905,7 +905,7 @@ export default function DashboardPage() {
             <div className="truncate text-left">
               <h5 className="text-xs font-bold truncate text-slate-800">{user.full_name}</h5>
               <span className="text-[10px] text-slate-500 capitalize tracking-wider flex items-center gap-1 font-semibold">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#0284c7]" /> {user.role === 'admin' ? 'Admin Operations' : user.role === 'therapist' ? 'Guide Care Team' : 'Personal Wellness Space'}
+                <ShieldCheck className="w-3.5 h-3.5 text-[#0284c7]" /> {user.role === 'admin' ? 'Admin Operations' : user.role === 'therapist' ? 'Guide Care Team' : 'Member Care Hub'}
               </span>
             </div>
           </div>

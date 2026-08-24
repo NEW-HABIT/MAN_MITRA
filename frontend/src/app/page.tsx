@@ -174,7 +174,7 @@ export default function LandingPage() {
             </motion.div>
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} className="w-full sm:w-auto">
               <Link href="/auth/login" className="glass-panel w-full sm:w-auto px-8 py-4 rounded-full text-sm font-semibold text-slate-700 hover:border-sky-300 hover:bg-sky-50/50 transition-all flex items-center justify-center">
-                Enter Wellness Space
+                Member Sign In
               </Link>
             </motion.div>
           </motion.div>
