@@ -658,11 +658,11 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
         </motion.div>
       )}
 
-      {/* ── DAILY RECORDING HISTORY TIMELINE PANEL ────────────────────────────── */}
+      {/* ── PRESENT COMPLAINTS & CHECK-IN RECORDINGS PANEL ────────────────────────────── */}
       <div className="glass-panel p-6 rounded-3xl bg-white border border-sky-100 shadow-sm space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
-            <History className="w-4 h-4 text-[#0284c7]" /> Your Saved Check-in History ({pastHistory.length})
+            <History className="w-4 h-4 text-[#0284c7]" /> Present Complaints ({pastHistory.length})
           </div>
           <button onClick={fetchHistory} className="text-xs text-sky-600 hover:text-sky-800 font-semibold flex items-center gap-1 cursor-pointer">
             <RefreshCw className="w-3 h-3" /> Refresh Records
@@ -671,8 +671,8 @@ export default function AssessmentSuite({ accessToken, onNavigateTab }: Assessme
 
         {pastHistory.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-500 italic space-y-2">
-            <p>No check-in recordings found yet.</p>
-            <p className="text-[11px] text-slate-400 font-normal">Complete your check-in above and it will automatically be saved here.</p>
+            <p>No present complaints recorded yet.</p>
+            <p className="text-[11px] text-slate-400 font-normal">Complete your check-in above and your recorded complaints will automatically appear here.</p>
           </div>
         ) : (
           <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
